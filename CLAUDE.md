@@ -27,15 +27,40 @@ documented sources.
 
 ## Setup
 
-- Run everything from the repository root with `.venv\Scripts\python` (Python 3.14 with pytest,
-  openpyxl, python-dateutil).
-- Set the Master Data path once in the git-ignored `agritool.cfg`, or in the environment variable
-  `AGRITOOL_MASTER_DATA_PATH`:
+The repository holds the recipe for the environment: `.python-version`, `requirements.txt`,
+`requirements-build.txt` and `agritool.cfg.example`. The environment itself (`.venv`), the Python
+installation and `agritool.cfg` stay on each machine and are git-ignored.
 
-  ```ini
-  [master_data]
-  path = C:/python/AgriToolV.1/data/external_data/MasterData (3.12, undef).xlsx
-  ```
+1. Install Python 3.14 (`.python-version`; pyenv and uv pick it up automatically).
+2. Create `.venv` in the repository root and install the packages. Run everything from the
+   repository root with the Python of `.venv`.
+
+   | | Windows | macOS |
+   |---|---|---|
+   | Create | `py -3.14 -m venv .venv` | `python3.14 -m venv .venv` |
+   | Install | `.venv\Scripts\python -m pip install -r requirements.txt` | `.venv/bin/python -m pip install -r requirements.txt` |
+   | Run | `.venv\Scripts\python ...` | `.venv/bin/python ...` |
+
+   - `requirements.txt`: model, tests and checks. The model reads only the committed tables in
+     `data/`; every user needs it.
+   - `requirements-build.txt`: adds the packages of the `scripts/build_*.py` that rebuild tables
+     from the raw sources in `data/external_data/`, and includes `requirements.txt`. Only needed
+     to update a table. FC keeps these packages in a second environment `.venv-gis`; a single
+     `.venv` installed from this file works as well. `scripts/build_hwsd_soil.py` needs the
+     Microsoft Access ODBC driver and runs only on Windows.
+3. Set the Master Data path: copy `agritool.cfg.example` to `agritool.cfg` and fill in `path`, or
+   set the environment variable `AGRITOOL_MASTER_DATA_PATH`. Example (FC's machine):
+
+   ```ini
+   [master_data]
+   path = C:/python/AgriToolV.1/data/external_data/MasterData (3.12, undef).xlsx
+   ```
+
+   On macOS the same file inside your clone, for example
+   `/Users/<you>/repos/agritoolv.1/data/external_data/MasterData (3.12, undef).xlsx`.
+4. Not in the repository: `data/external_data/`, `Literature/` and the Master Data come from FC,
+   and some are licensed. Without them the tests that need them are skipped, and
+   `scripts/check_master_data.py` and the build scripts do not run.
 
 ## Working environments (O12)
 
@@ -158,9 +183,23 @@ work moves by push, fetch and pull requests, never by copying files.
 
 ## Checks (before every commit)
 
+Windows:
+
 ```
 .venv\Scripts\python -m pytest -q tests/legacy_model
 .venv\Scripts\python scripts\compare_regression.py
 .venv\Scripts\python scripts\review_status.py
 .venv\Scripts\python scripts\check_master_data.py
 ```
+
+macOS:
+
+```
+.venv/bin/python -m pytest -q tests/legacy_model
+.venv/bin/python scripts/compare_regression.py
+.venv/bin/python scripts/review_status.py
+.venv/bin/python scripts/check_master_data.py
+```
+
+`check_master_data.py` needs the Master Data path (Setup, step 3); without it, run the first three
+and say so in the pull request.

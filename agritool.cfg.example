@@ -1,0 +1,11 @@
+# Local settings of AgriToolV.1 (read by src/legacy_model/config.py).
+# Copy this file to agritool.cfg in the repository root (git-ignored) and set your own path.
+# The environment variable AGRITOOL_MASTER_DATA_PATH, when set, takes precedence over this file.
+#
+# The ecoinvent Master Data is licensed and is never committed; ask FC for the file.
+# Without it the model runs with its built-in names and scripts/check_master_data.py does not run.
+
+[master_data]
+# Windows: path = C:/python/AgriToolV.1/data/external_data/MasterData (3.12, undef).xlsx
+# macOS:   path = /Users/<you>/repos/agritoolv.1/data/external_data/MasterData (3.12, undef).xlsx
+path =

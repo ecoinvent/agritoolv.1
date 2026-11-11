@@ -107,8 +107,8 @@ The **Use** column below means:
 ## Erosion factors
 
 C, P and R factors of the erosion model (`erosionmodel.py`, decisions L59 and L60; template v3 specification section 5.13) and the
-maps aggregated over the crop area (build environment `.venv-gis`: numpy, tifffile, imagecodecs, h5py, pyshp, openpyxl; the netCDF classic files of CRU TS are read
-by `scripts/netcdf_classic.py`).
+maps aggregated over the crop area (build environment: packages of `requirements-build.txt`, installed in FC's `.venv-gis` or in a
+single `.venv`; the netCDF classic files of CRU TS are read by `scripts/netcdf_classic.py`).
 
 | File | Source | Use | How it is used |
 |---|---|---|---|

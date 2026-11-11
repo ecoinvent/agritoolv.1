@@ -1,0 +1,11 @@
+# Packages to use AgriToolV.1: run the model, the tests and the checks.
+# The model reads only the committed tables in data/; every user needs this file.
+#
+#   pip install -r requirements.txt
+#
+# To rebuild data tables from the raw sources, install requirements-build.txt instead (it includes this file).
+# Versions are not fixed yet; Python 3.14 is set in .python-version.
+
+openpyxl          # Excel files: Master Data, templates, source workbooks
+python-dateutil   # dates in the model
+pytest            # tests in tests/legacy_model and legacy_fixes

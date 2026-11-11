@@ -227,3 +227,6 @@ agritool.cfg
 Literature/
 data/external_data/
 legacy_fixes/.pytest_cache/
+
+# Personal working notes (not shared)
+notes/

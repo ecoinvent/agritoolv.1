@@ -1,0 +1,17 @@
+# Packages to rebuild the data tables in data/ from the raw sources with scripts/build_*.py.
+# Only needed when a table is updated; the scripts also need the raw files in data/external_data/,
+# which are not in the repository.
+#
+#   pip install -r requirements-build.txt
+#
+# Includes requirements.txt, so one environment built from this file runs everything.
+
+-r requirements.txt
+
+numpy             # map and grid arithmetic
+tifffile          # GeoTIFF maps (SPAM 2020, GloREDa, Panagos)
+imagecodecs       # compressed GeoTIFFs; used by tifffile, not imported directly
+h5py              # netCDF-4 files (TerraClimate)
+pyshp             # shapefiles (GAUL 2024 boundaries); imported as shapefile
+pyodbc; sys_platform == "win32"   # HWSD v2 Access database (build_hwsd_soil.py); needs the Microsoft Access
+                                  # ODBC driver, Windows only
