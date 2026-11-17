@@ -1,0 +1,39 @@
+operation,emep_operation,note,status,reviewed_by
+soilcultivation_decompactation,soil cultivation,,confirmed,FC
+soilcultivation_tillage_chisel,soil cultivation,,confirmed,FC
+soilcultivation_tillage_spring_tine_weeder,soil cultivation,,confirmed,FC
+soilcultivation_tillage_rotary_harrow,soil cultivation,,confirmed,FC
+soilcultivation_tillage_sprint_tine_harrow,soil cultivation,,confirmed,FC
+soilcultivation_tillage_hoeing_earthing_up,soil cultivation,,confirmed,FC
+soilcultivation_tillage_plough,soil cultivation,,confirmed,FC
+soilcultivation_tillage_roll,soil cultivation,,confirmed,FC
+soilcultivation_tillage_rotary_cultivator,soil cultivation,,confirmed,FC
+soilcultivation_other,,"not counted: free-text operation, written as diesel (MJ), no passes",confirmed,FC
+harvesting_chopping_maize,,not counted (L68),confirmed,FC
+harvesting_threshing_combine_harvester,harvesting,,confirmed,FC
+harvesting_picking_up_forage_self_propelled_loader,,not counted (L68),confirmed,FC
+harvesting_beets_complete_havester,,not counted (L68),confirmed,FC
+harvesting_potatoes_complete_havester,,not counted (L68),confirmed,FC
+harvesting_making_hay_rotary_tedder,,not counted (L68),confirmed,FC
+harvesting_loading_bales,,not counted (L68),confirmed,FC
+harvesting_mowing_motor_mower,,not counted (L68),confirmed,FC
+harvesting_mowing_rotary_mower,,not counted (L68),confirmed,FC
+harvesting_removing_potatoes_haulms,,not counted (L68),confirmed,FC
+harvesting_windrowing_rotary_swather,,not counted (L68),confirmed,FC
+harvesting_other,,"not counted: free-text operation, written as diesel (MJ), no passes",confirmed,FC
+sowingplanting_sowing,,not counted (L68),confirmed,FC
+sowingplanting_planting_seedlings,,not counted (L68),confirmed,FC
+sowingplanting_planting_potatoes,,not counted (L68),confirmed,FC
+sowingplanting_other,,"not counted: free-text operation, written as diesel (MJ), no passes",confirmed,FC
+fertilisation_fertilizing_broadcaster,,not counted (L68),confirmed,FC
+fertilisation_liquid_manure_vacuum_tanker,,not counted (L68),confirmed,FC
+fertilisation_solid_manure,,not counted (L68),confirmed,FC
+fertilisation_other,,"not counted: free-text operation, written as diesel (MJ), no passes",confirmed,FC
+plantprotection_spraying,,not counted (L68),confirmed,FC
+plantprotection_flaming,,not counted (L68),confirmed,FC
+plantprotection_other,,"not counted: free-text operation, written as diesel (MJ), no passes",confirmed,FC
+otherworkprocesses_baling,,not counted (L68),confirmed,FC
+otherworkprocesses_chopping,,not counted (L68),confirmed,FC
+otherworkprocesses_mulching,,not counted (L68),confirmed,FC
+otherworkprocesses_transport_tractor_trailer,,not counted (L68),confirmed,FC
+otherworkprocesses_other,,"not counted: free-text operation, written as diesel (MJ), no passes",confirmed,FC
