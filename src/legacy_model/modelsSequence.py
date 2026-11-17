@@ -14,6 +14,7 @@ from models.nmodel import NModel
 from models.olcapestmodel import OlcaPestModel
 from models.otherorganicfertilisermodel import OtherOrganicFertModel
 from models.packmodel import PackModel
+from models.pmmodel import PmModel
 from models.pmodel import PModel
 from models.ricech4model import RiceCh4Model
 from models.seedmodel import SeedModel
@@ -53,6 +54,8 @@ class ModelsSequence(object):
         self.outputMapping.mapLucModel(LUCModel(self.allInputs).compute(), self.allInputs)
         #self.outputMapping.mapUsedIntermidiateValues(self._intermediateValues)
         self.outputMapping.mapMachineries(self.allInputs)
+        # Decision L68: after mapMachineries, whose ha of each field operation are the passes of the PM model
+        self.outputMapping.mapPmModel(PmModel(self.allInputs).compute())
         self.outputMapping.mapCODWasteWater(self.allInputs)
         self.outputMapping.mapPesticides(self.allInputs)
         self.outputMapping.mapPesticideEmissions(OlcaPestModel(self.allInputs).compute())

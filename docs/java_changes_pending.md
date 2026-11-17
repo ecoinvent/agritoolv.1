@@ -98,9 +98,17 @@ New output key `ch4_rice_air` (kg CH4 per ha and crop cycle), only for flooded c
 The writer emits it as the elementary flow of the row of `data/elementary_flow_alignment.csv` with this model variable:
 `Methane, non-fossil`, air, non-urban air or from high stacks.
 
+## L68 - PM of field operations
+
+New output keys `pm2_5_field_operations_air` and `pm2_5_to_10_field_operations_air` (kg per ha and crop cycle, soil and
+crop dust of field operations, EMEP/EEA 2023 3.D Tier 2), present for every crop (0 without counted operations). The
+writer emits them as the elementary flows of the rows of `data/elementary_flow_alignment.csv` with these model
+variables: `Particulate Matter, < 2.5 um` and `Particulate Matter, > 2.5 um and < 10um`, air, non-urban air or from
+high stacks. A zero amount needs no exchange.
+
 ## Other Python output changes that touch the writer
 
 - `heavymetal_to_soil_minus_uptake_*` (read by the writer) is now the full SALCA balance with the
   harvest export from Freiermuth Tab. 5; `heavymetal_to_soil_*` is the balance without export.
 - No output key was removed. New keys not yet consumed: `occupation_annual_flooded`,
-  `transformation_from/to_annual_flooded`, `seed_*`, `pestiair_*`, `pestisoil_*`, `pestiforestry_*`, `pestiwater_*` (L65), `ch4_rice_air` (L66).
+  `transformation_from/to_annual_flooded`, `seed_*`, `pestiair_*`, `pestisoil_*`, `pestiforestry_*`, `pestiwater_*` (L65), `ch4_rice_air` (L66), `pm2_5_field_operations_air`, `pm2_5_to_10_field_operations_air` (L68).

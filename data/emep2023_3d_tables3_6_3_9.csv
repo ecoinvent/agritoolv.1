@@ -1,0 +1,97 @@
+table,page,pollutant,climate,emep_crop,operation,ef_kg_per_ha_per_pass,note
+Table 3-6,23,PM10,wet,wheat,soil cultivation,0.25,
+Table 3-6,23,PM10,wet,wheat,harvesting,2.7,
+Table 3-6,23,PM10,wet,wheat,cleaning,0.19,
+Table 3-6,23,PM10,wet,wheat,drying,0.56,
+Table 3-6,23,PM10,wet,rye,soil cultivation,0.25,
+Table 3-6,23,PM10,wet,rye,harvesting,2.0,
+Table 3-6,23,PM10,wet,rye,cleaning,0.16,
+Table 3-6,23,PM10,wet,rye,drying,0.37,
+Table 3-6,23,PM10,wet,barley,soil cultivation,0.25,
+Table 3-6,23,PM10,wet,barley,harvesting,2.3,
+Table 3-6,23,PM10,wet,barley,cleaning,0.16,
+Table 3-6,23,PM10,wet,barley,drying,0.43,
+Table 3-6,23,PM10,wet,oats,soil cultivation,0.25,
+Table 3-6,23,PM10,wet,oats,harvesting,3.4,
+Table 3-6,23,PM10,wet,oats,cleaning,0.25,
+Table 3-6,23,PM10,wet,oats,drying,0.66,
+Table 3-6,23,PM10,wet,other arable,soil cultivation,0.25,
+Table 3-6,23,PM10,wet,other arable,harvesting,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-6,23,PM10,wet,other arable,cleaning,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-6,23,PM10,wet,other arable,drying,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-6,23,PM10,wet,grass,soil cultivation,0.25,grass includes hay making only (note of the table)
+Table 3-6,23,PM10,wet,grass,harvesting,0.25,grass includes hay making only (note of the table)
+Table 3-6,23,PM10,wet,grass,cleaning,0,grass includes hay making only (note of the table)
+Table 3-6,23,PM10,wet,grass,drying,0,grass includes hay making only (note of the table)
+Table 3-7,23,PM10,dry,wheat,soil cultivation,2.25,
+Table 3-7,23,PM10,dry,wheat,harvesting,2.45,
+Table 3-7,23,PM10,dry,wheat,cleaning,0.19,
+Table 3-7,23,PM10,dry,wheat,drying,0,
+Table 3-7,23,PM10,dry,rye,soil cultivation,2.25,
+Table 3-7,23,PM10,dry,rye,harvesting,1.85,
+Table 3-7,23,PM10,dry,rye,cleaning,0.16,
+Table 3-7,23,PM10,dry,rye,drying,0,
+Table 3-7,23,PM10,dry,barley,soil cultivation,2.25,
+Table 3-7,23,PM10,dry,barley,harvesting,2.05,
+Table 3-7,23,PM10,dry,barley,cleaning,0.16,
+Table 3-7,23,PM10,dry,barley,drying,0,
+Table 3-7,23,PM10,dry,oats,soil cultivation,2.25,
+Table 3-7,23,PM10,dry,oats,harvesting,3.10,
+Table 3-7,23,PM10,dry,oats,cleaning,0.25,
+Table 3-7,23,PM10,dry,oats,drying,0,
+Table 3-7,23,PM10,dry,other arable,soil cultivation,2.25,
+Table 3-7,23,PM10,dry,other arable,harvesting,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-7,23,PM10,dry,other arable,cleaning,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-7,23,PM10,dry,other arable,drying,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-7,23,PM10,dry,grass,soil cultivation,2.25,grass includes hay making only (note of the table)
+Table 3-7,23,PM10,dry,grass,harvesting,1.25,grass includes hay making only (note of the table)
+Table 3-7,23,PM10,dry,grass,cleaning,0,grass includes hay making only (note of the table)
+Table 3-7,23,PM10,dry,grass,drying,0,grass includes hay making only (note of the table)
+Table 3-8,23,PM2.5,wet,wheat,soil cultivation,0.015,
+Table 3-8,23,PM2.5,wet,wheat,harvesting,0.02,
+Table 3-8,23,PM2.5,wet,wheat,cleaning,0.009,
+Table 3-8,23,PM2.5,wet,wheat,drying,0.168,
+Table 3-8,23,PM2.5,wet,rye,soil cultivation,0.015,
+Table 3-8,23,PM2.5,wet,rye,harvesting,0.015,
+Table 3-8,23,PM2.5,wet,rye,cleaning,0.008,
+Table 3-8,23,PM2.5,wet,rye,drying,0.111,
+Table 3-8,23,PM2.5,wet,barley,soil cultivation,0.015,
+Table 3-8,23,PM2.5,wet,barley,harvesting,0.016,
+Table 3-8,23,PM2.5,wet,barley,cleaning,0.008,
+Table 3-8,23,PM2.5,wet,barley,drying,0.129,
+Table 3-8,23,PM2.5,wet,oats,soil cultivation,0.015,
+Table 3-8,23,PM2.5,wet,oats,harvesting,0.025,
+Table 3-8,23,PM2.5,wet,oats,cleaning,0.0125,
+Table 3-8,23,PM2.5,wet,oats,drying,0.198,
+Table 3-8,23,PM2.5,wet,other arable,soil cultivation,0.015,
+Table 3-8,23,PM2.5,wet,other arable,harvesting,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-8,23,PM2.5,wet,other arable,cleaning,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-8,23,PM2.5,wet,other arable,drying,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-8,23,PM2.5,wet,grass,soil cultivation,0.015,grass includes hay making only (note of the table)
+Table 3-8,23,PM2.5,wet,grass,harvesting,0.01,grass includes hay making only (note of the table)
+Table 3-8,23,PM2.5,wet,grass,cleaning,0,grass includes hay making only (note of the table)
+Table 3-8,23,PM2.5,wet,grass,drying,0,grass includes hay making only (note of the table)
+Table 3-9,23,PM2.5,dry,wheat,soil cultivation,0.12,
+Table 3-9,23,PM2.5,dry,wheat,harvesting,0.098,
+Table 3-9,23,PM2.5,dry,wheat,cleaning,0.0095,
+Table 3-9,23,PM2.5,dry,wheat,drying,0,
+Table 3-9,23,PM2.5,dry,rye,soil cultivation,0.12,
+Table 3-9,23,PM2.5,dry,rye,harvesting,0.074,
+Table 3-9,23,PM2.5,dry,rye,cleaning,0.008,
+Table 3-9,23,PM2.5,dry,rye,drying,0,
+Table 3-9,23,PM2.5,dry,barley,soil cultivation,0.12,
+Table 3-9,23,PM2.5,dry,barley,harvesting,0.082,
+Table 3-9,23,PM2.5,dry,barley,cleaning,0.008,
+Table 3-9,23,PM2.5,dry,barley,drying,0,
+Table 3-9,23,PM2.5,dry,oats,soil cultivation,0.12,
+Table 3-9,23,PM2.5,dry,oats,harvesting,0.125,
+Table 3-9,23,PM2.5,dry,oats,cleaning,0.0125,
+Table 3-9,23,PM2.5,dry,oats,drying,0,
+Table 3-9,23,PM2.5,dry,other arable,soil cultivation,0.12,
+Table 3-9,23,PM2.5,dry,other arable,harvesting,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-9,23,PM2.5,dry,other arable,cleaning,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-9,23,PM2.5,dry,other arable,drying,,"NC, not calculable (note (a) of Table 3-1, p. 14); read as 0 by the model (L68)"
+Table 3-9,23,PM2.5,dry,grass,soil cultivation,0.12,grass includes hay making only (note of the table)
+Table 3-9,23,PM2.5,dry,grass,harvesting,0.05,grass includes hay making only (note of the table)
+Table 3-9,23,PM2.5,dry,grass,cleaning,0,grass includes hay making only (note of the table)
+Table 3-9,23,PM2.5,dry,grass,drying,0,grass includes hay making only (note of the table)

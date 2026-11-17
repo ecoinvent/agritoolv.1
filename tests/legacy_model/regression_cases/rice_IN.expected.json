@@ -128,6 +128,8 @@
   "otherworkprocesses_other": 0.0,
   "pest_horticultural_oil": 0.0,
   "plantprotection_other": 0.0,
+  "pm2_5_field_operations_air": 0.0,
+  "pm2_5_to_10_field_operations_air": 0.0,
   "seed_exchange_status": "master data not configured: legacy seed lookup",
   "seeds_rice": 60.0,
   "sewagesludge_dehydrated": 0.0,
