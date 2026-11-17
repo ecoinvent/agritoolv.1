@@ -382,6 +382,12 @@ SUPPORT_PRACTICE_FACTOR_PER_CROP_PER_COUNTRY = dataloader.crop_country_table("pa
 # the row "all_crops" per country (decision L64): IPCC climate zone map, mean over the SPAM 2020 V2r2 physical area of
 # the crop (scripts/build_ipcc_climate_wet_share.py)
 WET_CLIMATE_SHARE_PER_CROP_PER_COUNTRY = dataloader.crop_country_table("ipcc_climate_wet_share.csv", "wet_share")
+# Share of the crop area in a Mediterranean climate (Koppen-Geiger Csa, Csb, Csc; Beck et al. 2023, 1991-2020), the dry
+# climate of the PM factors of EMEP/EEA 2023 3.D Tables 3-6 to 3-9, per crop and country, with the row "all_crops" per
+# country (decision L68): mean over the SPAM 2020 V2r2 physical area of the crop
+# (scripts/build_koppen_mediterranean_share.py)
+MEDITERRANEAN_CLIMATE_SHARE_PER_CROP_PER_COUNTRY = dataloader.crop_country_table("koppen_mediterranean_share.csv",
+                                                                                 "dry_share")
 
 
 def _hwsd_soil(column, scale=1.0):

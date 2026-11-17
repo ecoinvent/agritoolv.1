@@ -135,6 +135,8 @@
   "plantprotection_flaming": 0.0,
   "plantprotection_other": 0.0,
   "plantprotection_spraying": 22.72727272727273,
+  "pm2_5_field_operations_air": 0.0,
+  "pm2_5_to_10_field_operations_air": 0.0,
   "remains_machinery_diesel": 900.090009,
   "rooting_up_trees": 0.04,
   "seed_exchange_status": "master data not configured: legacy seed lookup",

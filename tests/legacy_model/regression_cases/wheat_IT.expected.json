@@ -150,6 +150,8 @@
   "pestiwater_fungicides_mancozeb": 0.000110652394596174,
   "pestiwater_herbicides_glyphosate": 0.00035430260664964493,
   "plantprotection_other": 0.0,
+  "pm2_5_field_operations_air": 0.12008801905353629,
+  "pm2_5_to_10_field_operations_air": 3.2287651444548002,
   "remains_machinery_diesel": 1125.1125112500001,
   "seed_exchange_status": "master data not configured: legacy seed lookup",
   "seeds_wheat": 180.0,

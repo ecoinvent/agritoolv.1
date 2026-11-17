@@ -3029,3 +3029,105 @@ mineral N), kg CO2 per 100 kg mineral N:
 The difference comes from two terms: the carbonate of CAN, CAN share x 100 x 0.40499 (new), and the second half of the
 UAN, UAN share x 100 x 0.5 x 1.5710 (urea share 1.0 instead of 0.5). Before = 157.10 x (urea + 0.5 x UAN); after =
 157.10 x (urea + UAN) + 40.50 x CAN. IN uses neither UAN nor CAN.
+
+## 55. PM10 and PM2.5 of field operations, EMEP/EEA 2023 3.D Tier 2 (decision L68, 2026-11-17)
+
+Issue #53. New model `models/pmmodel.py` for the soil and crop dust of field operations, EMEP/EEA air pollutant emission
+inventory guidebook 2023, 3.D Crop production and agricultural soils (`Literature/emep_3.DAgriculturalsoils2023FINAL.pdf`),
+checked against the PDF text:
+
+    E_PM [kg/(ha and crop cycle)] = sum_k EF_PM(t, k) x N(t, k)          (Eq. (5), p. 22, per ha)
+    EF_PM(t, k) = (1 - d) x EF_PM,wet(t, k) + d x EF_PM,dry(t, k)
+
+Dry = Mediterranean climate, wet = all other climates (p. 22). The factors are filterable PM measured next to the
+machinery; the Guidebook notes that much of it deposits near the field (p. 22) but gives no correction.
+
+### Factors (`emep2023_3d_tables3_6_3_9.csv`, kg/ha per pass)
+
+Tables 3-6 to 3-9, p. 23 (van der Hoek and Hinz, 2007), transcribed from the PDF text (`pdftotext -raw`; `-layout`
+shifts the rows). NC = not calculable (note (a) of Table 3-1, p. 14), read as 0. Annex 4 Table A4.1 (p. 48) lists the
+soil operations behind the soil cultivation factor (harrowing, discing, cultivating, ploughing).
+
+| Crop | PM10 wet: soil / harvest / cleaning / drying | PM10 dry | PM2.5 wet | PM2.5 dry |
+|---|---|---|---|---|
+| Wheat | 0.25 / 2.7 / 0.19 / 0.56 | 2.25 / 2.45 / 0.19 / 0 | 0.015 / 0.02 / 0.009 / 0.168 | 0.12 / 0.098 / 0.0095 / 0 |
+| Rye | 0.25 / 2.0 / 0.16 / 0.37 | 2.25 / 1.85 / 0.16 / 0 | 0.015 / 0.015 / 0.008 / 0.111 | 0.12 / 0.074 / 0.008 / 0 |
+| Barley | 0.25 / 2.3 / 0.16 / 0.43 | 2.25 / 2.05 / 0.16 / 0 | 0.015 / 0.016 / 0.008 / 0.129 | 0.12 / 0.082 / 0.008 / 0 |
+| Oats | 0.25 / 3.4 / 0.25 / 0.66 | 2.25 / 3.10 / 0.25 / 0 | 0.015 / 0.025 / 0.0125 / 0.198 | 0.12 / 0.125 / 0.0125 / 0 |
+| Other arable | 0.25 / NC / NC / NC | 2.25 / NC / NC / NC | 0.015 / NC / NC / NC | 0.12 / NC / NC / NC |
+| Grass (hay making only) | 0.25 / 0.25 / 0 / 0 | 2.25 / 1.25 / 0 / 0 | 0.015 / 0.01 / 0 / 0 | 0.12 / 0.05 / 0 / 0 |
+
+PM2.5 <= PM10 in every cell (guard in the model).
+
+### Mappings (signed by FC 2026-11-17)
+
+- Operations (`emep2023_pm_operation_mapping.csv`, 38 rows): soil cultivation = the 8 tillage operations (plough,
+  chisel, rotary harrow, rotary cultivator, roll, hoeing and earthing up, spring tine weeder, sprint tine harrow) and
+  decompactation; harvesting = combine harvester; the other 28 operations are not counted (sowing and planting,
+  fertilising, plant protection, the other 10 harvesting operations, other work processes, and the six free-text
+  `*_other` operations, written as diesel in MJ without passes). Cleaning and drying have no pass.
+- Crops (`emep2023_pm_crop_mapping.csv`, 67 rows): wheat -> wheat, oat -> oats, the other 65 -> other arable.
+- Passes: the ha of each operation per ha and crop cycle of `OutputMapping.mapMachineries` (diesel of the legacy inputs
+  divided by the legacy diesel per ha of the operation), the amounts written as the field operation inputs. The 30
+  diesel intensities (plough 26.1, combine harvester 33.3 kg/ha, ...; 24 operations in ha, the others per m3, kg, unit
+  or tkm) moved unchanged from `outputMapping.py` to `legacy_machinery_diesel_intensity.csv` ('legacy, undocumented,
+  provisional'), read through `dataloader.py`; regression identical. Only the operations with an intensity per ha give
+  passes: decompactation is written by the legacy model as diesel energy (10 kg diesel -> 450.045 MJ), not as ha, so
+  it gives no PM on this path (test). The 8 fuel energy factors (45.00450045 MJ/kg diesel, 46.35 MJ/kg flaming) stay
+  in the code; the legacy 45.0045 MJ/kg against the 42.8 MJ/kg of the Master Data 3.12 is a separate issue. With the
+  template v3 reader the passes come from the sheet `Operations` (spec 5.5).
+
+### Mediterranean share (`koppen_mediterranean_share.csv`)
+
+Built by `scripts/build_koppen_mediterranean_share.py` from the Koppen-Geiger map 1991-2020 of Beck et al. (2023)
+(`data/external_data/koppen_geiger_1991_2020_0p1.tif`, 0.1 degree, 1800 x 3600, WGS 84, codes 1-30, 0 = sea): dry =
+Csa, Csb, Csc (codes 8, 9, 10, checked against the legend file). Each 1/12 degree cell of the SPAM grid takes the class of
+the 0.1 degree cell that contains its centre; code 0 is left out. Weights, area, coverage and the all_crops fallback are
+those of `ipcc_climate_wet_share.csv` (L64), identical row by row: 2652 rows (39 countries, all_crops + 67 crops), 461
+crop rows on the all_crops weights, minimum coverage 0.9978 (coconut ID), all_crops coverage 1.0 everywhere. Spot checks
+of the map: Sicily 37.5 N 14.2 E and Seville 37.4 N 6.0 W code 8 (Csa), Po valley 45.0 N 10.0 E 14 (Cfa), Madrid plateau
+40.4 N 3.7 W 7 (BSk), Central Valley 37.0 N 120.5 W 6 (BSh).
+
+Countries with a dry share above 0 (the other 24 are 0; * = weights of all crops):
+
+| Crop | CL | ES | TR | IL | MA | IT | KE | AU | ZA | CO | EC | FR | US | PE | MX |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| all_crops | 0.902 | 0.61 | 0.605 | 0.577 | 0.559 | 0.439 | 0.128 | 0.116 | 0.063 | 0.039 | 0.024 | 0.017 | 0.016 | 0.009 | 0.001 |
+| wheat | 0.85 | 0.675 | 0.517 | 0.324 | 0.618 | 0.49 | 0.33 | 0.087 | 0.205 | 0.23 | 0.109 | 0.014 | 0.018 | 0.043 | 0.0 |
+| oat | 0.83 | 0.647 | 0.379 | 0.557 | 0.431 | 0.375 | 0.087 | 0.172 | 0.315 | 0.753 | 0.029 | 0.024 | 0.009 | 0.004 | 0.0 |
+| maizegrain | 0.992 | 0.495 | 0.709 | 0.845 | 0.328 | 0.115 | 0.161 | 0.029 | 0.004 | 0.019 | 0.025 | 0.004 | 0.002 | 0.022 | 0.002 |
+| sunflower | 0.85 | 0.775 | 0.737 | 0.799 | 0.627 | 0.312 | 0.131 | 0.018 | 0.001 | 0.039* | 0.032 | 0.027 | 0.018 | 0.0 | 0.001 |
+| potato | 0.668 | 0.719 | 0.385 | 0.294 | 0.458 | 0.589 | 0.405 | 0.173 | 0.064 | 0.363 | 0.041 | 0.007 | 0.048 | 0.008 | 0.002 |
+| tomato_processing | 1.0 | 0.544 | 0.587 | 0.492 | 0.424 | 0.45 | 0.118 | 0.07 | 0.064 | 0.096 | 0.317 | 0.08 | 0.27 | 0.0 | 0.0 |
+| grape | 0.994 | 0.594 | 0.754 | 0.673 | 0.478 | 0.496 | 0.232 | 0.262 | 0.442 | 0.179 | 0.031 | 0.02 | 0.447 | 0.02 | 0.001 |
+| olive | 0.865 | 0.595 | 0.962 | 0.822 | 0.556 | 0.746 | 0.017 | 0.007 | 0.586 | 0.039* | 0.032 | 0.006 | 0.113 | 0.017 | 0.001 |
+| orange_fresh | 0.929 | 0.502 | 0.718 | 0.709 | 0.483 | 0.523 | 0.058 | 0.073 | 0.071 | 0.061 | 0.051 | 0.137 | 0.274 | 0.002 | 0.0 |
+| almond | 0.857 | 0.604 | 0.841 | 0.619 | 0.545 | 0.556 | 0.018 | 0.05 | 0.204 | 0.032 | 0.003 | 0.526 | 0.344 | 0.002 | 0.0 |
+| rice | 1.0 | 0.607 | 0.746 | 0.577* | 0.437 | 0.092 | 0.0 | 0.0 | 0.0 | 0.0 | 0.012 | 0.597 | 0.189 | 0.002 | 0.0 |
+
+Wheat DE 0.0, wheat IT 0.490, wheat FR 0.014. Limits: BSk and BSh count as wet (inland Spain, Central Valley: US
+almond 0.344, grape 0.447); Csb of tropical highlands counts as dry (KE wheat 0.330, CO wheat 0.230 and oat 0.753, EC
+wheat 0.109).
+
+### Test cases (kg/ha per crop cycle)
+
+| Case | PM10 | PM2.5 | PM 2.5-10 |
+|---|---|---|---|
+| Wheat, 1 plough + 1 rotary harrow + 1 combine, wet | 3.20 | 0.050 | 3.150 |
+| Same, dry | 6.95 | 0.338 | 6.612 |
+| Same, dry share 0.4 | 4.70 | 0.1652 | 4.5348 |
+| Maize grain (other arable), 2 tillage + 1 combine, wet | 0.50 | 0.030 | 0.470 |
+| Same, dry | 4.50 | 0.24 | 4.26 |
+| Oat, 1 plough + 1 combine, wet | 3.65 | 0.040 | 3.610 |
+| Sowing, spraying, fertilising only; no operations | 0 | 0 | 0 |
+
+### Regression
+
+| Case | Passes (ha/ha) | Dry share | `pm2_5_field_operations_air` | `pm2_5_to_10_field_operations_air` |
+|---|---|---|---|---|
+| wheat_IT | plough 30/26.1 = 1.149425, combine 25/33.3 = 0.750751 | 0.490 | None -> 0.120088 | None -> 3.228765 |
+| rice_IN | none | - | None -> 0 | None -> 0 |
+| apple_FR | spraying only (not counted) | - | None -> 0 | None -> 0 |
+
+wheat_IT: PM10 = 0.51 x (0.25 x 1.149425 + 2.7 x 0.750751) + 0.49 x (2.25 x 1.149425 + 2.45 x 0.750751) = 0.51 x
+2.314383 + 0.49 x 4.425546 = 3.348853; PM2.5 = 0.51 x 0.032256 + 0.49 x 0.211505 = 0.120088. No other key changes.

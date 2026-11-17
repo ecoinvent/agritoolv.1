@@ -30,6 +30,28 @@ def magnesium_fertiliser_split(magnesium_total, dolomite):
                       "(%g kg Mg/ha): magnesium sulfate set to 0" % (dolomite, magnesium_dolomite, magnesium_total))
     return max(0.0, magnesium_rest) * MG_TO_MGSULFATE_FACTOR, dolomite
 
+MACHINERY_DIESEL_INTENSITY_TABLE = "legacy_machinery_diesel_intensity.csv"
+
+
+def machinery_diesel_intensity():
+    """{operation key: (kg diesel per unit of the operation, unit)} of the legacy machinery inputs (decision L68)."""
+    return {row["operation"]: (float(row["diesel_kg_per_unit"]), row["unit"])
+            for row in dataloader.rows(MACHINERY_DIESEL_INTENSITY_TABLE)}
+
+
+def machinery_factors(enum, fuel_energy_factors):
+    """Factor per kg diesel of each operation of a machinery group: 1 / diesel intensity (unit of the operation per kg
+    diesel) for the operations of legacy_machinery_diesel_intensity.csv, else the fuel energy factor (MJ per kg)."""
+    intensity = machinery_diesel_intensity()
+    factors = {}
+    for operation in enum:
+        if operation.value in intensity:
+            factors[operation] = 1.0 / intensity[operation.value][0]
+        else:
+            factors[operation] = fuel_energy_factors[operation]
+    return factors
+
+
 class OutputMapping(object):
 
     def __init__(self):
@@ -250,6 +272,13 @@ class OutputMapping(object):
         for key, value in ch4Output.items():
             self.output[key] = value
 
+    def mapPmModel(self, pmOutput):
+        """Decision L68: pm2_5_field_operations_air (Particulate Matter, < 2.5 um) and pm2_5_to_10_field_operations_air
+        (Particulate Matter, > 2.5 um and < 10um) [kg/(ha*crop cycle)], soil and crop dust of field operations
+        (EMEP/EEA 2023 3.D Tier 2, models/pmmodel.py)."""
+        for key, value in pmOutput.items():
+            self.output[key] = value
+
     def mapPesticideEmissions(self, emissions):
         """Decision L65: emissions of each active ingredient [kg/(ha*crop cycle)] with the OLCA-Pest default
         fractions (models/olcapestmodel.py), keys pestiair_ / pestisoil_ / pestiforestry_ / pestiwater_<category>_<name>
@@ -333,59 +362,23 @@ class OutputMapping(object):
         manure_type: dataloader.param("liquid_manure_density_kg_per_m3") for manure_type in LiquidManureType
     }
 
-    # legacy, undocumented, provisional: diesel intensities of the machinery operations below
-    _PLANTPROTECTION_FACTORS = {
-        Plantprotection.spraying: 1.0 / 1.76,
+    # legacy, undocumented, provisional: fuel energy of the operations written as fuel, not as a field operation
+    # (diesel 45.00450045 MJ/kg, flaming 46.35 MJ/kg); the diesel intensities of the other operations are in
+    # data/legacy_machinery_diesel_intensity.csv (decision L68)
+    _MACHINERY_FUEL_ENERGY_FACTORS = {
         Plantprotection.flaming: 46.35,
-        Plantprotection.other: 45.00450045
-    }
-
-    _SOILCULTIVATION_FACTORS = {
+        Plantprotection.other: 45.00450045,
         Soilcultivation.decompactation: 45.00450045,
-        Soilcultivation.tillage_chisel: 1.0 / 15.5,
-        Soilcultivation.tillage_spring_tine_weeder: 1.0 / 1.6,
-        Soilcultivation.tillage_rotary_harrow: 1.0 / 11.5,
-        Soilcultivation.tillage_sprint_tine_harrow: 1.0 / 4.4,
-        Soilcultivation.tillage_hoeing_earthing_up: 1.0 / 3.6,
-        Soilcultivation.tillage_plough: 1.0 / 26.1,
-        Soilcultivation.tillage_roll: 1.0 / 3.18,
-        Soilcultivation.tillage_rotary_cultivator: 1.0 / 14.1,
         Soilcultivation.other: 45.00450045,
-    }
-
-    _SOWINGPLANTING_FACTORS = {
-        Sowingplanting.sowing: 1.0 / 3.82,
-        Sowingplanting.planting_seedlings: 1.0 / 16.8,
-        Sowingplanting.planting_potatoes: 1.0 / 8.9,
         Sowingplanting.other: 45.00450045,
-    }
-
-    _FERTILISATION_FACTORS = {
-        Fertilisation.fertilizing_broadcaster: 1.0 / 5.29,
-        Fertilisation.liquid_manure_vacuum_tanker: 1.0 / 0.217,
-        Fertilisation.solid_manure: 1.0 / 0.531,
         Fertilisation.other: 45.00450045,
-    }
-
-    _HARVESTING_FACTORS = {
-        Harvesting.chopping_maize: 1.0 / 52.8,
-        Harvesting.threshing_combine_harvester: 1.0 / 33.3,
-        Harvesting.picking_up_forage_self_propelled_loader: 1.0 / 0.106,
-        Harvesting.beets_complete_havester: 1.0 / 28.1,
-        Harvesting.potatoes_complete_havester: 1.0 / 28.1,
-        Harvesting.making_hay_rotary_tedder: 1.0 / 1.92,
-        Harvesting.loading_bales: 1.0 / 0.0811,
-        Harvesting.mowing_motor_mower: 1.0 / 3.0,
-        Harvesting.mowing_rotary_mower: 1.0 / 4.31,
-        Harvesting.removing_potatoes_haulms: 1.0 / 4.79,
-        Harvesting.windrowing_rotary_swather: 1.0 / 2.94,
         Harvesting.other: 45.00450045,
-    }
-
-    _OTHERWORK_FACTORS = {
-        OtherWorkProcesses.baling: 1.0 / 0.743,
-        OtherWorkProcesses.chopping: 1.0 / 52.8,
-        OtherWorkProcesses.mulching: 1.0 / 3.51,
-        OtherWorkProcesses.transport_tractor_trailer: 1.0 / 0.0436,
         OtherWorkProcesses.other: 45.00450045,
     }
+
+    _PLANTPROTECTION_FACTORS = machinery_factors(Plantprotection, _MACHINERY_FUEL_ENERGY_FACTORS)
+    _SOILCULTIVATION_FACTORS = machinery_factors(Soilcultivation, _MACHINERY_FUEL_ENERGY_FACTORS)
+    _SOWINGPLANTING_FACTORS = machinery_factors(Sowingplanting, _MACHINERY_FUEL_ENERGY_FACTORS)
+    _FERTILISATION_FACTORS = machinery_factors(Fertilisation, _MACHINERY_FUEL_ENERGY_FACTORS)
+    _HARVESTING_FACTORS = machinery_factors(Harvesting, _MACHINERY_FUEL_ENERGY_FACTORS)
+    _OTHERWORK_FACTORS = machinery_factors(OtherWorkProcesses, _MACHINERY_FUEL_ENERGY_FACTORS)
