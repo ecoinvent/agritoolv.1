@@ -39,6 +39,21 @@ def machinery_diesel_intensity():
             for row in dataloader.rows(MACHINERY_DIESEL_INTENSITY_TABLE)}
 
 
+def fuel_energy(item):
+    """kg (or Nm3) of a fuel item -> MJ of its exchange, factor of data/fuel_heating_values.csv (decision L69)."""
+    factor = dataloader.fuel_factor(item)
+    return lambda x: x * factor
+
+
+def machinery_fuel_energy_factors():
+    """{operation: MJ per kg} of the machinery operations written as fuel (decompactation, the *_other operations,
+    flaming), from data/fuel_heating_values.csv (decision L69)."""
+    factors = dataloader.fuel_factors()
+    return {operation: factors[operation.value]
+            for enum in (Plantprotection, Soilcultivation, Sowingplanting, Fertilisation, Harvesting, OtherWorkProcesses)
+            for operation in enum if operation.value in factors}
+
+
 def machinery_factors(enum, fuel_energy_factors):
     """Factor per kg diesel of each operation of a machinery group: 1 / diesel intensity (unit of the operation per kg
     diesel) for the operations of legacy_machinery_diesel_intensity.csv, else the fuel energy factor (MJ per kg)."""
@@ -289,7 +304,8 @@ class OutputMapping(object):
 
     def mapMachineries(self, allInputs):
         if ("remains_machinery_diesel" in allInputs):
-            self.output["remains_machinery_diesel"] = allInputs["remains_machinery_diesel"] * 45.00450045
+            self.output["remains_machinery_diesel"] = (allInputs["remains_machinery_diesel"]
+                                                       * dataloader.fuel_factor("remains_machinery_diesel"))
         self._convertEnumMap(allInputs["plantprotection_quantities"], self._PLANTPROTECTION_FACTORS)
         self._convertEnumMap(allInputs["soilcultivation_quantities"], self._SOILCULTIVATION_FACTORS)
         self._convertEnumMap(allInputs["sowingplanting_quantities"], self._SOWINGPLANTING_FACTORS)
@@ -305,7 +321,8 @@ class OutputMapping(object):
         for k,v in enumdict.items():
             self.output[k.value] = v * factors[k]
 
-    # legacy, undocumented, provisional: unit conversion factors (fuel heating values, diesel 45.0045 MJ/kg, fleece 0.017 kg/m2, petrol)
+    # fuel factors in data/fuel_heating_values.csv (L69): 1 / fuel input of the background dataset, mass-consistent
+    # (kg or Nm3 of fuel -> MJ of the exchange written, MJ of heat for the heat exchanges)
     _DIRECT_OUTPUT_MAPPING = {
         # FIXME: No system_boundary input anymore, use ecospold name metadata instead?
         # "system_boundary":identity,
@@ -326,21 +343,20 @@ class OutputMapping(object):
         "fert_other_portafer": identity,
         "fert_other_borax": identity,
 
-        "total_machinery_gazoline": lambda x: x / 0.022075,
+        "total_machinery_gazoline": fuel_energy("total_machinery_gazoline"),
 
         "energy_electricity_low_voltage_at_grid": identity,
         "energy_electricity_photovoltaic_produced_locally": identity,
         "energy_electricity_wind_power_produced_locally": identity,
-        "energy_diesel_excluding_diesel_used_in_tractor": lambda x: x * 45.00450045,
-        # kg -> MJ
-        "energy_lignite_briquette": lambda x: x / 0.111,
-        "energy_hard_coal_briquette": lambda x: x / 0.0318,
-        "energy_fuel_oil_light": lambda x: x / 0.02342,
-        "energy_fuel_oil_heavy": lambda x: x / 0.025,
-        "energy_natural_gas": lambda x: x / 0.0272, # Nm3 -> MJ
-        "energy_wood_pellets_humidity_10_percent": lambda x: x / 0.0587,
-        "energy_wood_chips_fresh_humidity_40_percent": lambda x: x / 0.0545,
-        "energy_wood_logs": lambda x: x / 0.0643,
+        "energy_diesel_excluding_diesel_used_in_tractor": fuel_energy("energy_diesel_excluding_diesel_used_in_tractor"),
+        "energy_lignite_briquette": fuel_energy("energy_lignite_briquette"),
+        "energy_hard_coal_briquette": fuel_energy("energy_hard_coal_briquette"),
+        "energy_fuel_oil_light": fuel_energy("energy_fuel_oil_light"),
+        "energy_fuel_oil_heavy": fuel_energy("energy_fuel_oil_heavy"),
+        "energy_natural_gas": fuel_energy("energy_natural_gas"),
+        "energy_wood_pellets_humidity_10_percent": fuel_energy("energy_wood_pellets_humidity_10_percent"),
+        "energy_wood_chips_fresh_humidity_40_percent": fuel_energy("energy_wood_chips_fresh_humidity_40_percent"),
+        "energy_wood_logs": fuel_energy("energy_wood_logs"),
         "energy_heat_district_heating": identity,
         "energy_heat_solar_collector": identity,
 
@@ -348,7 +364,7 @@ class OutputMapping(object):
         "utilities_wateruse_surface": identity,
         "utilities_wateruse_non_conventional_sources": lambda x: x * 1000.0, #m3 -> kg
 
-        "materials_fleece": lambda x: x / 0.017,
+        "materials_fleece": lambda x: x / 0.017,  # legacy, undocumented, provisional: fleece 0.017 kg/m2
         "materials_silage_foil": identity,
         "materials_covering_sheet": identity,
         "materials_bird_net": identity,
@@ -362,19 +378,11 @@ class OutputMapping(object):
         manure_type: dataloader.param("liquid_manure_density_kg_per_m3") for manure_type in LiquidManureType
     }
 
-    # legacy, undocumented, provisional: fuel energy of the operations written as fuel, not as a field operation
-    # (diesel 45.00450045 MJ/kg, flaming 46.35 MJ/kg); the diesel intensities of the other operations are in
+    # fuel factors in data/fuel_heating_values.csv (L69): 1 / fuel input of the background dataset, mass-consistent;
+    # MJ per kg of the operations written as fuel, not as a field operation (decompactation and the *_other operations:
+    # diesel, flaming: propane heat); the diesel intensities of the other operations are in
     # data/legacy_machinery_diesel_intensity.csv (decision L68)
-    _MACHINERY_FUEL_ENERGY_FACTORS = {
-        Plantprotection.flaming: 46.35,
-        Plantprotection.other: 45.00450045,
-        Soilcultivation.decompactation: 45.00450045,
-        Soilcultivation.other: 45.00450045,
-        Sowingplanting.other: 45.00450045,
-        Fertilisation.other: 45.00450045,
-        Harvesting.other: 45.00450045,
-        OtherWorkProcesses.other: 45.00450045,
-    }
+    _MACHINERY_FUEL_ENERGY_FACTORS = machinery_fuel_energy_factors()
 
     _PLANTPROTECTION_FACTORS = machinery_factors(Plantprotection, _MACHINERY_FUEL_ENERGY_FACTORS)
     _SOILCULTIVATION_FACTORS = machinery_factors(Soilcultivation, _MACHINERY_FUEL_ENERGY_FACTORS)

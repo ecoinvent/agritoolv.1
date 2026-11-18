@@ -55,6 +55,29 @@ def param(name):
         raise KeyError("Parameter '%s' not found in model_parameters.csv" % name)
 
 
+FUEL_TABLE = "fuel_heating_values.csv"
+
+
+@lru_cache(maxsize=None)
+def fuel_factors():
+    """{item: MJ of the written exchange per template unit} from ``fuel_heating_values.csv`` (decision L69).
+
+    The table stores the derived factor = input_per_template_unit / (fuel input of the background dataset per MJ it
+    produces: kg, m3 or MJ of fuel); input_per_template_unit converts the template unit (kg, Nm3) to the unit of
+    that input (1, kg dry per kg wet for wood, MJ per kg for briquettes), so the declared fuel equals the fuel
+    burned in the background dataset. The ecoinvent input amounts themselves are not stored (L50).
+    """
+    return {row["item"]: float(row["factor_MJ_per_template_unit"]) for row in rows(FUEL_TABLE)}
+
+
+def fuel_factor(item):
+    """MJ of the written exchange per template unit of one fuel item (decision L69)."""
+    try:
+        return fuel_factors()[item]
+    except KeyError:
+        raise KeyError("Fuel item '%s' not found in %s" % (item, FUEL_TABLE))
+
+
 def _to_float_or_none(value):
     return float(value) if value not in ("", None) else None
 
