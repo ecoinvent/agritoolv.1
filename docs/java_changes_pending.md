@@ -106,6 +106,15 @@ writer emits them as the elementary flows of the rows of `data/elementary_flow_a
 variables: `Particulate Matter, < 2.5 um` and `Particulate Matter, > 2.5 um and < 10um`, air, non-urban air or from
 high stacks. A zero amount needs no exchange.
 
+## L69 - fuel factors and the flaming exchange
+
+The fuel amounts (`remains_machinery_diesel`, `total_machinery_gazoline`, `plantprotection_flaming`, decompactation, the
+`*_other` operations, `energy_*`) are computed in Python from `data/fuel_heating_values.csv`; the output keys and their
+unit (MJ) are unchanged. One name changes: `plantprotection_flaming` must be written as
+`heat, district or industrial, other than natural gas` (MJ, 71e2f1db-a2c5-44d0-8337-dfff15be974d), the product of
+'heat production, propane, at industrial furnace >100kW', instead of `heat, central or small-scale, natural gas` (row
+of `data/intermediate_exchange_alignment.csv` signed by FC on 2026-11-18).
+
 ## Other Python output changes that touch the writer
 
 - `heavymetal_to_soil_minus_uptake_*` (read by the writer) is now the full SALCA balance with the

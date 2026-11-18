@@ -199,7 +199,8 @@ def test_diesel_intensity_table():
                for row in dataloader.rows("legacy_machinery_diesel_intensity.csv"))
     assert OutputMapping._SOILCULTIVATION_FACTORS[Soilcultivation.tillage_plough] == 1.0 / 26.1
     assert OutputMapping._HARVESTING_FACTORS[Harvesting.threshing_combine_harvester] == 1.0 / 33.3
-    assert OutputMapping._SOILCULTIVATION_FACTORS[Soilcultivation.decompactation] == 45.00450045
+    assert OutputMapping._SOILCULTIVATION_FACTORS[Soilcultivation.decompactation] == \
+        dataloader.fuel_factor("soilcultivation_decompactation")  # MJ diesel per kg, L69
 
 
 def test_legacy_passes_only_operations_in_ha():
@@ -210,9 +211,10 @@ def test_legacy_passes_only_operations_in_ha():
 
 
 def test_model_sequence_decompactation_gives_no_pm():
-    """10 kg diesel of decompactation is written as 450.045 MJ of diesel, not as ha: PM 0 on the legacy path."""
+    """10 kg diesel of decompactation is written as 450.0 MJ of diesel (1 / 0.0222222222222 kg/MJ, L69), not as ha:
+    PM 0 on the legacy path."""
     inputs = dict(rs.load_inputs("wheat_IT"), total_soilcultivation=10.0, ratio_soilcultivation_tillage_plough=0.0,
                   ratio_soilcultivation_decompactation=1.0, total_harvesting=0.0)
     out = _run(inputs)
-    assert out["soilcultivation_decompactation"] == pytest.approx(450.0450045)
+    assert out["soilcultivation_decompactation"] == pytest.approx(450.00000000045, rel=1e-12)
     assert out[PM2_5_KEY] == 0.0 and out[PM2_5_TO_10_KEY] == 0.0

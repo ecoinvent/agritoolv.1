@@ -152,7 +152,7 @@
   "plantprotection_other": 0.0,
   "pm2_5_field_operations_air": 0.12008801905353629,
   "pm2_5_to_10_field_operations_air": 3.2287651444548002,
-  "remains_machinery_diesel": 1125.1125112500001,
+  "remains_machinery_diesel": 1125.000000001125,
   "seed_exchange_status": "master data not configured: legacy seed lookup",
   "seeds_wheat": 180.0,
   "sewagesludge_dehydrated": 0.0,

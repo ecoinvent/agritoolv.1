@@ -94,6 +94,14 @@ DECISION_RULES = {
              "'lime' no longer exists; the model amount is kg CaCO3 (seaweed lime: Ca(OH)2)"),
 }
 
+# A model variable written with another exchange than its legacy name (the legacy name is shared with other
+# variables, so PROPOSAL_RULES cannot be used): status "proposed", to be confirmed by the reviewer.
+VARIABLE_PROPOSAL_RULES = {
+    "plantprotection_flaming": ("heat, district or industrial, other than natural gas",
+                                "L69: the flaming gas is propane, 46.35 legacy = Master Data propane 46.4; product of "
+                                "'heat production, propane, at industrial furnace >100kW' (data/fuel_heating_values.csv)"),
+}
+
 REVIEW_STATUSES = ("confirmed", "not_needed")
 
 
@@ -140,7 +148,11 @@ def update_table(path, lookup, pool_for):
             if row["status"] == "confirmed" and not md:
                 problems.append("%s: md312_name '%s' not in the Master Data" % (row["legacy_name"], row["md312_name"]))
         else:
-            status, name, candidates, note = propose(row["legacy_name"], md_lookup, pool_for(row))
+            if row.get("model_variable") in VARIABLE_PROPOSAL_RULES:
+                name, note = VARIABLE_PROPOSAL_RULES[row["model_variable"]]
+                status, candidates = ("proposed", "") if md_lookup(name) else ("missing", "")
+            else:
+                status, name, candidates, note = propose(row["legacy_name"], md_lookup, pool_for(row))
             md = md_lookup(name) if name else None
             row.update(status=status, md312_name=name, candidates=candidates, note=note)
         row["md312_uuid"] = md["id"] if md else ""
