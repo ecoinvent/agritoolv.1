@@ -46,7 +46,8 @@ work moves by push, fetch and pull requests, never by copying files.
 |---|---|---|
 | Role | Design and checks | Implementation and tests |
 | Typical work | Template specification, literature, sources and licences, checks of supplied files, status of GitHub, task briefs and pull request texts | Code, tables of `data/`, build scripts, pytest, regression, Master Data check |
-| Data | FC's files through the link to FC's computer (files up to 400 MB), no web downloads | All of `data/external_data/` |
+| Repository | Own clone in the session, attached with push access | `C:\python\AgriToolV.1` |
+| Data | `Literature/` and `data/external_data/` of `C:\python\AgriToolV.1` through the link to FC's computer (read only, files up to 400 MB), no web downloads | All of `data/external_data/` |
 | Branches | `template/*`, `docs/*` | `model/*`, `data/*`, `defaults/*`, `ci/*` |
 | Decision IDs | T (template v3) | L (model and data) |
 
@@ -54,6 +55,16 @@ work moves by push, fetch and pull requests, never by copying files.
   over the branch, and say so. Never edit a branch the other environment has unpushed work on.
 - **Start of every session:** `git fetch origin`, then report the state of `main`, of the open pull
   requests and of the branch in use.
+- **Access of every Claude desktop session (O14).** At the start of each session of the project:
+  - attach `ecoinvent/agritoolv.1` with push access and work in the session's own clone;
+  - ask FC for access to `C:\python\AgriToolV.1\Literature` and
+    `C:\python\AgriToolV.1\data\external_data` only, and use them read only; copy a file into
+    the session to read it or to run a script on it;
+  - never connect the whole `C:\python\AgriToolV.1`: it is the working copy of VS Code, and two
+    environments editing it would bypass Git. Never connect `C:\python\sri-crop-tool`.
+- **Texts of open pull requests (O15).** In the status report at the start of a session, the
+  desktop session also checks that the title and description of every open pull request match
+  its commits (`git log main..<branch>`) and tells FC what is out of date.
 - **Task briefs:** the desktop session writes the brief for VS Code (goal, data, decisions taken,
   tests with expected values). FC may paste it into a GitHub issue; the branch and the pull request
   then refer to it ("Closes #n").
@@ -140,6 +151,13 @@ work moves by push, fetch and pull requests, never by copying files.
    - write the description to the scratchpad, following `.github/pull_request_template.md`;
    - open the PR with `gh pr create --base main --title "..." --body-file <file>`;
    - give FC the link.
+   - **Keep the title and description current (O15).** After every later push to a branch with an
+     open pull request (review fixes, snapshot updates, rebases), update both with
+     `gh pr edit <n> --title "..." --body-file <file>`, so that they describe the whole branch as
+     it will be merged, not the first push. The title becomes the commit message on `main`.
+   - Before telling FC that a pull request is ready to merge, compare its title and description
+     with `git log main..<branch>` and `git diff main...<branch> --stat`, and confirm in the reply
+     that they are current and that the CI run of the last commit is green.
 
    The description is the long-term record of the change, so it must be readable without the
    chat. If `gh` is not available, push the branch and give FC the description and
