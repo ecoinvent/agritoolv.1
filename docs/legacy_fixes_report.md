@@ -3131,3 +3131,97 @@ wheat 0.109).
 
 wheat_IT: PM10 = 0.51 x (0.25 x 1.149425 + 2.7 x 0.750751) + 0.49 x (2.25 x 1.149425 + 2.45 x 0.750751) = 0.51 x
 2.314383 + 0.49 x 4.425546 = 3.348853; PM2.5 = 0.51 x 0.032256 + 0.49 x 0.211505 = 0.120088. No other key changes.
+
+## 56. Fuel factors from the background datasets (decision L69, 2026-11-18)
+
+Issue #55. The legacy `outputMapping.py` converted the declared fuels (kg, Nm3) to MJ of an ecoinvent exchange with
+undocumented factors ('legacy, undocumented, provisional'). All of them now come from `data/fuel_heating_values.csv`
+(`dataloader.fuel_factor`): factor = input_per_template_unit / fuel input of the background dataset per MJ it
+produces. Only the derived factor (`factor_MJ_per_template_unit`) and the conversion are stored; the input amounts
+quoted below are not (rule of L50, FC 2026-11-18). The fuel declared in the template is then the fuel burned in the background
+dataset (mass-consistent); for the heat exchanges the factor is LHV x efficiency of the heat dataset. Only
+`materials_fleece` (0.017 kg/m2) keeps the legacy tag in `outputMapping.py`.
+
+### Phase 1: legacy, Master Data 3.12 and background datasets (read-only, 2026-11-18)
+
+Template v2 (sheet User Guidance, rows 134-177): every fuel in kg, natural gas in Nm3; the guidance gives LHV 43.8
+(diesel), 9.0 (lignite briquette), 31.5, 42.7, 40.0, 36.8 MJ/Nm3, 17.0, 18.3, 15.6 MJ/kg. Master Data 3.12, sheet
+'IntermediateExchanges prop.'; datasets of `exchanges (3.12, undef).xlsx`, GLO.
+
+| Item | Legacy MJ/unit | Master Data 3.12 | Background dataset (implied) |
+|---|---|---|---|
+| diesel items (9) | 45.0045 (1/0.0222) | 'diesel' heating value, net 42.8 MJ/kg (Report 6 part IV p. 16) | diesel, burned in agricultural machinery: 0.0222222222222 kg/MJ = 45.0 ('1 kg diesel (45 MJ)') |
+| petrol | 45.300 (1/0.022075) | 'petrol, unleaded' 43.2 ('assumed equal to petroleum') | petrol, unleaded, burned in machinery: 0.0220750551876 kg/MJ = 45.3 |
+| flaming | 46.35 | 'propane' 46.4; LPG 45.5; natural gas vehicle grade 48.98 | heat, natural gas: no value per kg |
+| lignite briquette | 9.009 (1/0.111) | 'lignite briquettes' 19.5, wet mass 0.0512820512820513 kg/MJ; 'lignite' 8.8 | stove 5-15kW: 'caloric value 19.5 MJ/kg', efficiency 0.70 |
+| hard coal briquette | 31.447 (1/0.0318) | 'hard coal briquettes' wet mass 0.0318471337579618 kg/MJ (31.40 MJ/kg), no heating value | stove 5-15kW: '31.4 MJ/kg', efficiency 0.699 |
+| light fuel oil | 42.699 (1/0.02342) | 'light fuel oil' 42.6 | boilers: 0.02342 kg per MJ fuel; condensing 1.00, non-condensing 0.94 |
+| heavy fuel oil | 40.000 (1/0.025) | 'heavy fuel oil' 41.2 | industrial furnace 1MW: 0.02463 kg per MJ fuel (40.6), efficiency 0.95 |
+| natural gas | 36.765 per Nm3 (1/0.0272) | 'natural gas, low pressure' 36 MJ/m3 (gross 40) | condensing modulating <100kW: 0.98/36 m3 per MJ heat (= legacy) |
+| wood pellets | 17.036 (1/0.0587) | 13.38 MJ/kg dry, wet mass 1.1 | furnaces: 0.053365 kg dry per MJ fuel (18.7 MJ/kg dry); 0.053365 x 1.1 = 0.0587 |
+| wood chips | 18.349 (1/0.0545) | 'wood chips, green' 10.84 MJ/kg dry (water 1.1 on dry) | furnace 50kW: 1/18.3 (hardwood) kg dry per MJ fuel; the legacy used 18.3 per kg dry for fresh chips |
+| wood logs | 15.552 (1/0.0643) | 'cleft timber, green' 14.46 MJ/kg dry, wet mass 1.3 | furnace 30kW: 0.0539 kg dry per MJ fuel (18.55 MJ/kg dry), efficiency 0.70 |
+
+The ecoinvent reports No. 15 (Nemecek and Kaegi 2007) and No. 6 part IV are not in `Literature/` (`Nemecek2022.pdf`
+is the OLCA-Pest article): the heating values they use are not quoted.
+
+### Chosen values (FC 2026-11-18; MJ per template unit)
+
+| Item | Dataset (GLO) | Input per MJ | Conversion | Factor | Legacy |
+|---|---|---|---|---|---|
+| diesel items (9) | diesel, burned in agricultural machinery | 0.0222222222222 kg | 1 | 45.0000 | 45.0045 |
+| total_machinery_gazoline | petrol, unleaded, burned in machinery | 0.0220750551876 kg | 1 | 45.3000 | 45.3001 |
+| plantprotection_flaming | heat production, propane, at industrial furnace >100kW | 0.0226567279153545 kg | 1 | 44.1370 | 46.35 |
+| energy_natural_gas | heat production, natural gas, at boiler condensing modulating <100kW | 0.0272222222222222 m3 | 1 Nm3 = 1 m3 | 36.7347 | 36.7647 |
+| energy_fuel_oil_light | heat production, light fuel oil, at boiler 100kW, non-modulating | 0.0249148936170213 kg | 1 | 40.1366 | 42.6985 |
+| energy_fuel_oil_heavy | heat production, heavy fuel oil, at industrial furnace 1MW | 0.0259263157894737 kg | 1 | 38.5708 | 40.0 |
+| energy_lignite_briquette | heat production, lignite briquette, at stove 5-15kW | 1.42857142857143 MJ | 19.5 MJ/kg | 13.6500 | 9.0090 |
+| energy_hard_coal_briquette | heat production, hard coal briquette, stove 5-15kW | 1.43 MJ | 31.4 MJ/kg | 21.9580 | 31.4465 |
+| energy_wood_pellets_humidity_10_percent | heat production, wood pellet, at furnace 25kW | 0.0711533333333332 kg dry | 1/1.1 kg dry/kg | 12.7765 | 17.0358 |
+| energy_wood_chips_fresh_humidity_40_percent | heat production, hardwood chips from forest, at furnace 50kW | 0.0780640124902421 kg dry | 0.6 kg dry/kg | 7.6860 | 18.3486 |
+| energy_wood_logs | heat production, mixed logs, at furnace 30kW | 0.0770000000000001 kg dry | 1/1.3 kg dry/kg | 9.9900 | 15.5521 |
+
+Choices of FC when the brief did not match the release: logs 'at furnace 30kW' (no 'wood heater 30kW' exists;
+alternatives: wood heater 6kW efficiency 0.50, furnace 100kW 0.75, state-of-the-art 2014 versions 0.75 to 0.80);
+light fuel oil 'at boiler 100kW, non-modulating' (the 10kW boiler has the same input); chips 'hardwood chips from
+forest, at furnace 50kW'; GLO for all datasets (the CH and Europe without Switzerland versions of the heat datasets have
+the same inputs). Moisture: pellets 'humidity 10 %' read as 10 % of the dry mass (1.1 kg per kg dry, the Master Data
+convention and the legacy 0.0587); chips 'fresh, humidity 40 %' as 40 % of the wet mass (0.6 kg dry per kg); logs
+with the Master Data wet mass 1.3 (the dataset gives no moisture). With 10 % on the wet basis (0.9 kg dry per kg)
+the pellet factor would be 12.65 instead of 12.78 MJ/kg (-1 %), rejected for consistency with the Master Data basis. The briquette inputs are in MJ of briquettes; 19.5
+and 31.4 MJ/kg are the comments of the Europe without Switzerland datasets and equal 1 / wet mass of the Master Data.
+
+Flaming: the legacy 46.35 MJ/kg is the propane of the Master Data (46.4), written as heat of natural gas. The exchange
+changes to 'heat, district or industrial, other than natural gas' (71e2f1db), the product of the propane dataset;
+`intermediate_exchange_alignment.csv` row `plantprotection_flaming` is confirmed, reviewed_by 'FC 2026-11-18' (before
+the signature `VARIABLE_PROPOSAL_RULES` of `scripts/check_master_data.py` kept the unsigned row as a proposal instead
+of recomputing it from its legacy name). The writer requirement is in `java_changes_pending.md` (L69).
+
+Effect per 10 template units (legacy -> new MJ): petrol 453.0 -> 453.0, flaming 463.5 -> 441.4, natural gas 367.6 ->
+367.3, light fuel oil 427.0 -> 401.4, heavy fuel oil 400.0 -> 385.7, lignite briquettes 90.1 -> 136.5, hard coal
+briquettes 314.5 -> 219.6, pellets 170.4 -> 127.8, chips 183.5 -> 76.9, logs 155.5 -> 99.9.
+
+### Tests (`tests/legacy_model/test_fuel_heating_values.py`)
+
+- Table: 19 rows (9 diesel items, petrol, flaming, 8 `energy_*`), no `input_amount` column, factor > 0, source given,
+  units, exchanges written equal to the alignment table, flaming row signed.
+- Mass balance: 10 kg of each `*_other` operation, decompactation, flaming, `energy_diesel_excluding...`, petrol and
+  each `energy_*`, 25 kg of `remains_machinery_diesel`: MJ written / factor = the declared amount (rel 1e-9); wood: 10 kg -> 9.0909 (pellets), 6.0 (chips), 7.6923 (logs) kg dry in the heat dataset.
+- Hand values: diesel 10 kg -> 450.00000000045 MJ; petrol 10 kg -> 453.0; lignite briquettes 10 kg -> 136.5 MJ heat
+  (no longer 90.1); natural gas 1 Nm3 -> 36/0.98; hard coal briquettes 10 kg -> 314/1.43.
+- Plough 1/26.1 and combine harvester 1/33.3 unchanged (L68); none of the legacy literals 45.00450045, 0.0222,
+  0.022075, 46.35, 0.111, 0.0318, 0.02342, 0.025, 0.0272, 0.0587, 0.0545, 0.0643 left in `outputMapping.py`.
+- Master Data (skipped without it): conversions of briquettes, pellets and logs = 1 / wet mass; diesel 42.8 and petrol
+  43.2 as read (10 kg diesel x 42.8 MJ/kg x 0.0222 kg/MJ = 9.51 kg).
+- Release file (slow, `AGRITOOL_SLOW_TESTS=1`, about 50 s): input_per_template_unit / factor equals the input amount
+  of each dataset in `exchanges (3.12, undef).xlsx` (rel 1e-9); units and reference products as in the release.
+
+### Regression
+
+| Case | Key | Before | After |
+|---|---|---|---|
+| wheat_IT | `remains_machinery_diesel` (25 kg) | 1125.1125 | 1125.0 (25 / 0.0222222222222) |
+| apple_FR | `remains_machinery_diesel` (20 kg) | 900.0900 | 900.0 |
+| rice_IN | - | unchanged | unchanged |
+
+No other key changes: the three cases declare no petrol, flaming, decompactation, `*_other` diesel or `energy_*` fuel.
