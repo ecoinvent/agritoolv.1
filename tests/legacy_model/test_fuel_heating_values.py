@@ -5,11 +5,10 @@ Factor (MJ of the written exchange per template unit) = input_per_template_unit 
 fuel burned in the background dataset. Only the derived factor is stored (L50); the slow test recomputes the input
 as input_per_template_unit / factor and compares it with the release file.
 
-Expected values computed by hand from the dataset inputs:
-- diesel 0.0222222222222 kg/MJ: 10 kg -> 10 / 0.0222222222222 = 450.00000000045 MJ (legacy 450.045);
-- petrol 0.0220750551876 kg/MJ: 10 kg -> 453.0 MJ (legacy 1/0.022075: 453.001);
-- lignite briquettes 1.42857142857143 MJ fuel/MJ heat, 19.5 MJ/kg: 10 kg -> 195 / 1.42857142857143 = 136.5 MJ heat
-  (legacy 10 / 0.111 = 90.09);
+Expected values computed by hand (conversion x LHV x efficiency of the dataset comments; L50: no exchange amounts):
+- diesel, the dataset input is the inverse of 45 MJ/kg to 12 decimals: 10 kg -> 450.00000000045 MJ (legacy 450.045);
+- petrol 45.3 MJ/kg: 10 kg -> 453.0 MJ (legacy 453.001);
+- lignite briquettes 19.5 MJ/kg x efficiency 0.70: 10 kg -> 136.5 MJ heat (legacy 90.09);
 - plough 26.1 kg/ha and combine harvester 33.3 kg/ha (L68) unchanged.
 """
 import os
