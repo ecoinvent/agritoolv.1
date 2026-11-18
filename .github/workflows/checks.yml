@@ -1,0 +1,36 @@
+# Repository checks on every pull request to main and every push to main (decision O13).
+# check_master_data.py is not run: the Master Data is licensed and never committed (O4); the Master Data
+# tests skip because AGRITOOL_MASTER_DATA_PATH is not set here. Run that check locally before every commit.
+name: checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: python -m pip install pytest openpyxl python-dateutil
+
+      - name: Tests
+        run: python -m pytest -q tests/legacy_model
+
+      - name: Regression comparison (fails when a case differs from its snapshot)
+        run: python scripts/compare_regression.py
+
+      - name: Review status (informational)
+        continue-on-error: true
+        run: python scripts/review_status.py

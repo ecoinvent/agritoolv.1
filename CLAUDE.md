@@ -47,7 +47,7 @@ work moves by push, fetch and pull requests, never by copying files.
 | Role | Design and checks | Implementation and tests |
 | Typical work | Template specification, literature, sources and licences, checks of supplied files, status of GitHub, task briefs and pull request texts | Code, tables of `data/`, build scripts, pytest, regression, Master Data check |
 | Data | FC's files through the link to FC's computer (files up to 400 MB), no web downloads | All of `data/external_data/` |
-| Branches | `template/*`, `docs/*` | `model/*`, `data/*`, `defaults/*` |
+| Branches | `template/*`, `docs/*` | `model/*`, `data/*`, `defaults/*`, `ci/*` |
 | Decision IDs | T (template v3) | L (model and data) |
 
 - **One branch, one environment at a time.** Commit and push before the other environment takes
@@ -164,3 +164,9 @@ work moves by push, fetch and pull requests, never by copying files.
 .venv\Scripts\python scripts\review_status.py
 .venv\Scripts\python scripts\check_master_data.py
 ```
+
+GitHub Actions (`.github/workflows/checks.yml`, O13) runs the first three checks on every pull
+request to `main` and on every push to `main`: the tests and `compare_regression.py` fail the run
+(the script exits 1 when a case differs from its snapshot), `review_status.py` is informational.
+`check_master_data.py` stays a local check: the Master Data is not in the repository (O4), and
+the Master Data tests skip on GitHub because `AGRITOOL_MASTER_DATA_PATH` is not set there.
