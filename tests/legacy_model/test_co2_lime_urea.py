@@ -4,16 +4,14 @@
 - UAN: default urea share 1.0 (IPCC 2006 p. 11.32, Step 3), a given share overrides it.
 - Calcium ammonium nitrate: the carbonate of its dolomite filler counts (p. 11.27, Step 1); composition per kg of
   product from the ecoinvent technical correction CPSTC-520 (data/can_composition.csv).
-- Dolomite as product (kg CaMg(CO3)2 per ha), also for the split of the Mg fertiliser into MgSO4 and dolomite.
+- Dolomite as product (kg CaMg(CO3)2 per ha). The split of the Mg fertiliser into MgSO4 and dolomite of L67 is
+  replaced by two independent inputs (decision L71, tests in test_dolomite_mg_lime.py).
 
 Expected values computed by hand with the atomic masses of models/atomicmass.py (C 12.0107, O 15.9994,
 N 14.00674, Mg 24.3050, Ca 40.078, S 32.066; CO2 44.0095, CaMg(CO3)2 184.4008, MgSO4 120.3686)."""
-import warnings
-
 import pytest
 
 import dataloader
-import regression_support as rs
 from defaultGeneration import DEFAULTS_VALUES_GENERATORS
 from excelInputMappingRules import EXCEL_INPUT_MAPPING_RULES
 from models.co2model import Co2Model, can_co2_per_kg_n
@@ -106,27 +104,11 @@ def test_magnesium_as_dolomite_is_removed():
     assert DEFAULTS_VALUES_GENERATORS["dolomite_applied"].generateDefault("dolomite_applied", {}) == 0.0
 
 
-def test_magnesium_split_rest_is_magnesium_sulfate():
-    # 100 kg dolomite carry 100 x 24.305 / 184.4008 = 13.18053 kg Mg; (30 - 13.18053) x 120.3686 / 24.305 = 83.2971
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        mgso4, dolomite = magnesium_fertiliser_split(30.0, 100.0)
-    assert dolomite == 100.0
-    assert mgso4 == pytest.approx(83.2971, abs=5e-4)
-
-
 def test_magnesium_split_without_dolomite():
     # 30 x 120.3686 / 24.305 = 148.5726 kg MgSO4 (the legacy default sent all Mg to dolomite)
     mgso4, dolomite = magnesium_fertiliser_split(30.0, 0.0)
     assert dolomite == 0.0
     assert mgso4 == pytest.approx(148.5726, abs=5e-4)
-
-
-def test_magnesium_split_dolomite_above_total_warns():
-    with pytest.warns(UserWarning, match="exceeds magnesium_from_fertilizer"):
-        mgso4, dolomite = magnesium_fertiliser_split(10.0, 100.0)
-    assert mgso4 == 0.0
-    assert dolomite == 100.0
 
 
 # --- unchanged: limestone, carbonation lime (fossil), seaweed lime (non-fossil, L17) ---
@@ -137,24 +119,3 @@ def test_limestone_carbonation_and_seaweed_lime_unchanged():
                    CaFertiliserType.ca_seaweed_limestone: 50.0})
     assert co2[FOSSIL] == pytest.approx(109.8096, abs=5e-4)
     assert co2[NON_FOSSIL] == pytest.approx(54.9048, abs=5e-4)
-
-
-# --- whole model sequence ---
-
-def test_model_sequence_dolomite_and_mg_exchanges():
-    """wheat_IT with 30 kg Mg of which 100 kg dolomite: +47.73 kg fossil CO2, exchanges 100 kg dolomite and
-    83.2971 kg MgSO4."""
-    base_inputs = rs.load_inputs("wheat_IT")
-    from modelsSequence import ModelsSequence
-    import config
-    original = config.master_data_path
-    config.master_data_path = lambda: None
-    try:
-        base = ModelsSequence(dict(base_inputs)).executeSequence()
-        inputs = dict(base_inputs, fert_other_total_mg=30.0, dolomite_applied=100.0)
-        out = ModelsSequence(inputs).executeSequence()
-    finally:
-        config.master_data_path = original
-    assert out["CO2_from_fertilisers"] - base["CO2_from_fertilisers"] == pytest.approx(47.7324, abs=5e-4)
-    assert out["magnesium_from_fertilizer_as_dolomite"] == 100.0
-    assert out["magnesium_from_fertilizer_as_mgso4"] == pytest.approx(83.2971, abs=5e-4)

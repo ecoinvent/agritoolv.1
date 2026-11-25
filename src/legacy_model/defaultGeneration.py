@@ -698,6 +698,8 @@ DEFAULTS_VALUES_GENERATORS = {
     "part_of_urea_in_UAN": ParameterDefaultGenerator("part_of_urea_in_UAN_default"),
     "magnesium_from_fertilizer": SimpleValueDefaultGenerator(0.0),
     "dolomite_applied": SimpleValueDefaultGenerator(0.0),
+    "quicklime_applied": SimpleValueDefaultGenerator(0.0),
+    "hydrated_lime_applied": SimpleValueDefaultGenerator(0.0),
     # Irrigation defaults
     "irrigation_types_proportions": TableLookupDefaultGenerator("country", IRR_TECH_RATIO_PER_COUNTRY),
     "irrigation_types_quantities": RatiosToValuesConvertor("irrigation_types_proportions", "water_use_total"),
