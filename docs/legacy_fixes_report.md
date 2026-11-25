@@ -3288,3 +3288,56 @@ Mg total and so in the packaging; with independent inputs it would otherwise be 
 | wheat_IT, rice_IN, apple_FR | `quicklime_applied`, `hydrated_lime_applied` | (no key) | 0 |
 
 No other key changes: the three cases declare no Mg, dolomite, quicklime or hydrated lime.
+
+## 58. P of compost, other organic fertilisers and solid sewage sludge in SALCA-P (decision L73, 2026-11-25)
+
+Closes walkthrough item B5. Before, the P model counted the P2O5 of liquid sewage sludge only.
+
+### Contents (`data/organic_fertiliser_composition.csv`, column `p2o5_kg_per_t_fm`)
+
+| Type | kg P2O5/t FM | Source |
+|---|---|---|
+| `composttype_compost` | 3 | GRUDAF 2009 (Flisch et al., AGRARForschung 16 (2)) Table 42, p. 63, compost, median, n = 1038. Printed "P (P2O5) 0,1 (3)": P 0.1 is a misprint (below the printed minimum 0.4, inconsistent with 3 kg P2O5); the P2O5 value is used. |
+| `sewagesludge_liquid` | 2.5 | Agribalyse 3.1 Table 142, p. 230, liquid sewage sludge (unchanged) |
+| `sewagesludge_dehydrated` | 7.5 | Agribalyse 3.1 Table 142, p. 230, semi-solid sewage sludge |
+| `sewagesludge_dried` | 60 | Agribalyse 3.1 Table 142, p. 230, dried sewage sludge |
+| `composttype_dried_poultry_manure` | 37.9 | Agribalyse 3.1 Table 142, p. 230, dry poultry droppings |
+| `composttype_vinasse` | 0 | Agribalyse 3.1 Table 142, p. 231, concentrated sugar beet vinasse (printed 0) |
+| meat and bone meal, castor oil shell, feather meal, horn meal, horn shavings, stone meal | (empty) | No P2O5 in the supplied sources (Table 142 gives none for feather meal): P counted as 0, with a warning when the type is applied |
+
+### Classification (Prasuhn 2006, SALCA-Phosphor)
+
+| P2O5 of | Leaching factor (0.2/80, p. 7) | Run-off factor Fro (p. 13) |
+|---|---|---|
+| Liquid sewage sludge | yes (unchanged) | slurry term 0.7/80 (unchanged) |
+| Dehydrated and dried sewage sludge | no | slurry term 0.7/80 ("Klaerschlamm wird wie Guelle ... beruecksichtigt") |
+| Compost types, dried poultry manure included | no | solid manure term 0.4/80 ("Kompost wie Mist") |
+
+`OtherOrganicFertModel.computeP2O5` returns (liquid sludge, dehydrated and dried sludge, compost types) in kg
+P2O5/ha; `modelsSequence` passes them to `PModel` as `p2o5_in_liquid_sludge`, `p2o5_in_solid_sludge` and
+`p2o5_in_compost`. The slope rule is unchanged: run-off is 0 for a known slope <= 3 %.
+
+### Tests (`tests/legacy_model/test_organic_p.py`, arable land)
+
+| Input | kg P2O5/ha | Fro increment | Leaching factor increment |
+|---|---|---|---|
+| 10 t compost | 30 | 0.4/80 x 30 = 0.15 | 0 |
+| 1 t dehydrated sludge | 7.5 | 0.7/80 x 7.5 = 0.065625 | 0 |
+| 1 t dried sludge | 60 | 0.7/80 x 60 = 0.525 | 0 |
+| 1 t liquid sludge | 2.5 | 0.7/80 x 2.5 = 0.021875 | 0.2/80 x 2.5 = 0.00625 |
+| 1 t dried poultry manure | 37.9 | 0.4/80 x 37.9 = 0.1895 | 0 |
+| 1 t vinasse | 0 | 0 | 0 (no warning) |
+| 1 t of each type without a P2O5 value | 0 | 0 | 0 (warning) |
+
+Known slope 3 % with compost and sludge: run-off 0.
+
+### Regression
+
+apple_FR (fruit trees, 2000 kg compost = 6 kg P2O5; mineral 30 and solid manure 13.5 kg P2O5): Fro 1.1425 -> 1.1725.
+
+| Case | Key | Before | After | Change |
+|---|---|---|---|---|
+| apple_FR | `PO4_surfacewater_ro` (kg PO4/ha) | 0.875780 | 0.898776 | +2.6 % |
+| apple_FR | `PO4_surfacewater` (drained + run-off) | 0.986163 | 1.009159 | +2.3 % |
+
+Groundwater, drained and erosion P unchanged; wheat_IT and rice_IN unchanged (no compost or sludge).

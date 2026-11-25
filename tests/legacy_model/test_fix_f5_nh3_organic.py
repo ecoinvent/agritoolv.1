@@ -39,7 +39,7 @@ def test_agribalyse_contents_of_sludge_and_dried_poultry_manure():
     assert dried.computeSolubleN() == pytest.approx(1.80)
     poultry = _model(compost={CompostType.dried_poultry_manure: 1_000})
     assert poultry.computeSolubleN() == pytest.approx(4.0)
-    assert _model(sludge={SludgeType.sewagesludge_liquid: 1_000}).computeP2O5() == pytest.approx(2.5)
+    assert _model(sludge={SludgeType.sewagesludge_liquid: 1_000}).computeP2O5() == pytest.approx((2.5, 0.0, 0.0))
 
 
 def test_stone_meal_without_n_emits_no_nh3():

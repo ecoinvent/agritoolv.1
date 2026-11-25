@@ -25,9 +25,15 @@ class PModel(object):
       known_slope_pct: % slope when known, None when unknown (run-off factor s = 1)
       land_use_category: LandUseCategory
       p2o5_in_liquid_manure: kg P2O5/(ha*crop cycle)
-      p2o5_in_liquid_sludge: kg P2O5/(ha*crop cycle)
+      p2o5_in_liquid_sludge: kg P2O5/(ha*crop cycle), liquid sewage sludge
+      p2o5_in_solid_sludge: kg P2O5/(ha*crop cycle), dehydrated and dried sewage sludge
+      p2o5_in_compost: kg P2O5/(ha*crop cycle), compost types incl. dried poultry manure
       p2O5_from_mineral_fert: kg P2O5/(ha*crop cycle)
       p2o5_in_solid_manure: kg P2O5/(ha*crop cycle)
+
+    Organic P (decision L73, Prasuhn 2006): leaching counts liquid manure and liquid sludge only
+    (p. 7); run-off counts every sewage sludge with slurry and the compost types with solid manure
+    ("Klaerschlamm wird wie Guelle, Kompost wie Mist beruecksichtigt", p. 13).
 
     Outputs:
       m_P_PO4_groundwater: kg PO4/(ha*crop cycle)
@@ -47,6 +53,8 @@ class PModel(object):
                         "land_use_category",
                         "p2o5_in_liquid_manure",
                         "p2o5_in_liquid_sludge",
+                        "p2o5_in_solid_sludge",
+                        "p2o5_in_compost",
                         "p2O5_from_mineral_fert",
                         "p2o5_in_solid_manure"
                        ]
@@ -62,7 +70,8 @@ class PModel(object):
         p2o5_liquid_sources = self._compute_p205_in_liquid_sources()
         phosphorus = self._compute_phosphorus_leach_in_ground_water(p2o5_liquid_sources)
         po4gw, po4swd = self._compute_and_split_phosphorus_to_ground_and_surface_waters_phosphates(phosphorus)
-        po4swro = self._compute_phosphate_runoff_to_rivers(p2o5_liquid_sources)
+        po4swro = self._compute_phosphate_runoff_to_rivers(p2o5_liquid_sources + self.p2o5_in_solid_sludge,
+                                                           self.p2o5_in_solid_manure + self.p2o5_in_compost)
         psw_erosion = self._compute_phosphorus_from_erosion_to_rivers()
 
         return {"m_P_PO4_groundwater": po4gw,
@@ -79,10 +88,12 @@ class PModel(object):
         return row[column] * self._duration_years()
 
     def _compute_p205_in_liquid_sources(self):
+        """P2O5 of liquid manure and liquid sewage sludge, the slurry of the leaching factor."""
         return self.p2o5_in_liquid_manure + self.p2o5_in_liquid_sludge
 
     def _compute_phosphorus_leach_in_ground_water(self, p2o5_liquid_sources):
-        """Pgw = Pgwl x t x (1 + 0.2/80 x P2O5 slurry) [kg P] (doc 2.5.1)."""
+        """Pgw = Pgwl x t x (1 + 0.2/80 x P2O5 slurry) [kg P] (doc 2.5.1); slurry = liquid manure
+        and liquid sewage sludge (Prasuhn 2006, p. 7: only P from slurry; decision L73)."""
         correction_factor = 1 + dataloader.param("p_corr_slurry_leaching") * p2o5_liquid_sources
         return self._average_loss("p_leaching_kg_p_per_ha_yr") * correction_factor
 
@@ -95,18 +106,20 @@ class PModel(object):
         surface = phosphate * self.drained_part * dataloader.param("p_drainage_factor")
         return (ground, surface)
 
-    def _compute_phosphate_runoff_to_rivers(self, p2o5_liquid_sources):
+    def _compute_phosphate_runoff_to_rivers(self, p2o5_slurry, p2o5_manure):
         """Pro = Prol x t x Fro x s [kg PO4] (doc 2.5.2; SALCAfieldP ESM5 Eq. 2).
 
         s = 0 when the slope is known and <= p_runoff_slope_threshold_pct (3 %), 1 otherwise
-        (also when the slope is unknown). Fro = 1 + 0.2/80 P2O5min + 0.7/80 P2O5sl + 0.4/80 P2O5man.
+        (also when the slope is unknown). Fro = 1 + 0.2/80 P2O5min + 0.7/80 P2O5sl + 0.4/80 P2O5man,
+        with P2O5sl = liquid manure + all sewage sludge and P2O5man = solid manure + compost types
+        (Prasuhn 2006, p. 13; decision L73).
         """
         if self.known_slope_pct is not None \
                 and self.known_slope_pct <= dataloader.param("p_runoff_slope_threshold_pct"):
             return 0.0
         correction_factor = 1 + dataloader.param("p_corr_mineral_runoff") * self.p2O5_from_mineral_fert \
-                              + dataloader.param("p_corr_slurry_runoff") * p2o5_liquid_sources \
-                              + dataloader.param("p_corr_manure_runoff") * self.p2o5_in_solid_manure
+                              + dataloader.param("p_corr_slurry_runoff") * p2o5_slurry \
+                              + dataloader.param("p_corr_manure_runoff") * p2o5_manure
         prunoff = self._average_loss("p_runoff_kg_p_per_ha_yr") * correction_factor
         return prunoff * P_TO_PO4_FACTOR
 

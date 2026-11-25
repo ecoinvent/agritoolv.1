@@ -99,7 +99,7 @@ The **Use** column below means:
 | `ipcc2019_faostat_item_awms_mapping.csv` | AgriToolV.1 | model | FAOSTAT livestock items -> IPCC animal categories. |
 | `ipcc2019_country_region.csv` | FAOSTAT GLE areas; UNSD M49. Built by `build_faostat_manure_ipcc_region.py`. | model | IPCC region of every FAOSTAT area. |
 | `ipcc2019_m49_region_mapping.csv` | AgriToolV.1 (UNSD M49 sub-regions) | build | M49 sub-regions and exceptions -> IPCC regions. |
-| `organic_fertiliser_composition.csv` | GRUDAF 2009 Table 42 (compost); Agribalyse 3.1 Tables 59 and 142 (sludge, feather meal, poultry droppings); some legacy values | model | N, TAN and P2O5 of compost, sewage sludge and other organic fertilisers, and their EMEP source category (L15, L20, L21). |
+| `organic_fertiliser_composition.csv` | GRUDAF 2009 Table 42 (compost); Agribalyse 3.1 Tables 59 and 142 (sludge, feather meal, poultry droppings, vinasse); some legacy values | model | N, TAN and P2O5 of compost, sewage sludge and other organic fertilisers, and their EMEP source category (L15, L20, L21); P2O5 enters the P model, sludge as slurry and compost types as solid manure (L73). |
 | `emep2023_3d_table3_1.csv` | EMEP/EEA Guidebook 2023, 3.D Table 3-1 | model | NH3 factors of sewage sludge and other organic wastes (L15). |
 
 ## Phosphorus and soil
