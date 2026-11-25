@@ -100,6 +100,12 @@ VARIABLE_PROPOSAL_RULES = {
     "plantprotection_flaming": ("heat, district or industrial, other than natural gas",
                                 "L69: the flaming gas is propane, 46.35 legacy = Master Data propane 46.4; product of "
                                 "'heat production, propane, at industrial furnace >100kW' (data/fuel_heating_values.csv)"),
+    "quicklime_applied": ("quicklime, milled, loose",
+                          "L72 (template v3 T20): CaO in kg of product, spread in bulk; same name in ecoCalc v4; "
+                          "other Master Data 3.12 products: 'quicklime, milled, packed', 'quicklime, in pieces, loose'"),
+    "hydrated_lime_applied": ("hydrated lime, loose",
+                              "L72 (template v3 T20): Ca(OH)2 in kg of product, spread in bulk; same name in ecoCalc v4; "
+                              "other Master Data 3.12 product: 'hydrated lime, packed'"),
 }
 
 REVIEW_STATUSES = ("confirmed", "not_needed")

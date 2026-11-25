@@ -1,5 +1,3 @@
-import warnings
-
 import config
 import dataloader
 import seedexchanges
@@ -7,28 +5,21 @@ from defaultGeneration import TREE_BASED_CROPS, SEEDLINGS_BASED_CROPS
 from directMappingEnums import Plantprotection, Soilcultivation, Sowingplanting, \
     Fertilisation, Harvesting, OtherWorkProcesses
 from models.atomicmass import MA_NH3, MA_N, MG_TO_MGSULFATE_FACTOR, \
-    MG_TO_DOLOMITE_FACTOR, Ca_TO_LIMESTONE_FACTOR, Ca_TO_LIMEALGAE_FACTOR, Zn_TO_ZINCOXIDE_FACTOR
+    Ca_TO_LIMESTONE_FACTOR, Ca_TO_LIMEALGAE_FACTOR, Zn_TO_ZINCOXIDE_FACTOR
 from models.manuremodel import LiquidManureType
 from models.olcapestmodel import COMPARTMENT_PREFIXES as OLCA_PEST_PREFIXES
 
 def identity(x): return x
 
 
-def magnesium_fertiliser_split(magnesium_total, dolomite):
-    """(kg MgSO4, kg dolomite) per ha of the Mg fertiliser exchanges (decision L67).
+def magnesium_fertiliser_split(magnesium, dolomite):
+    """(kg MgSO4, kg dolomite) per ha of the Mg fertiliser exchanges (decision L71, template v3 T19).
 
-    magnesium_total: kg Mg/ha of all Mg fertilisers (magnesium_from_fertilizer), including the dolomite;
-    dolomite: kg dolomite (CaMg(CO3)2, product)/ha (dolomite_applied), written as it is.
-    The Mg of the dolomite is stoichiometric (the Master Data 3.12 'dolomite' has no magnesium content);
-    the rest of the Mg is magnesium sulfate, not below 0, with a warning when the dolomite carries more
-    Mg than the total.
+    magnesium: kg Mg/ha of the Mg fertilisers other than dolomite (magnesium_from_fertilizer), written as
+    magnesium sulfate; dolomite: kg dolomite (CaMg(CO3)2, product)/ha (dolomite_applied), written as it is.
+    The two inputs are independent: the Mg of the dolomite is not subtracted (the subtraction of L67 is removed).
     """
-    magnesium_dolomite = dolomite / MG_TO_DOLOMITE_FACTOR
-    magnesium_rest = magnesium_total - magnesium_dolomite
-    if magnesium_rest < -1e-9 * max(magnesium_total, magnesium_dolomite):
-        warnings.warn("dolomite_applied (%g kg dolomite/ha = %g kg Mg/ha) exceeds magnesium_from_fertilizer "
-                      "(%g kg Mg/ha): magnesium sulfate set to 0" % (dolomite, magnesium_dolomite, magnesium_total))
-    return max(0.0, magnesium_rest) * MG_TO_MGSULFATE_FACTOR, dolomite
+    return magnesium * MG_TO_MGSULFATE_FACTOR, dolomite
 
 MACHINERY_DIESEL_INTENSITY_TABLE = "legacy_machinery_diesel_intensity.csv"
 
@@ -202,6 +193,12 @@ class OutputMapping(object):
                                                      allInputs["dolomite_applied"])
         self.output["magnesium_from_fertilizer_as_mgso4"] = mgso4
         self.output["magnesium_from_fertilizer_as_dolomite"] = dolomite
+        # Decision L72: quicklime and hydrated lime, kg product/ha, written as they are
+        self.output["quicklime_applied"] = allInputs["quicklime_applied"]
+        self.output["hydrated_lime_applied"] = allInputs["hydrated_lime_applied"]
+        # Decision L72: quicklime and hydrated lime, kg product/ha, written as they are
+        self.output["quicklime_applied"] = allInputs["quicklime_applied"]
+        self.output["hydrated_lime_applied"] = allInputs["hydrated_lime_applied"]
 
     def mapOtherOrganicFertilizers(self, allInputs):
         self._mapEnumMap(allInputs["compost_quantities"])

@@ -214,7 +214,9 @@ EXCEL_INPUT_MAPPING_RULES = {
                     #CO2 model rules
                     "magnesium_from_fertilizer": SimpleInputMappingRule("fert_other_total_mg"),
                     # L67: the v2 share fert_other_dolomite_in_mg is no longer read; dolomite_applied
-                    # (kg dolomite/ha) has no v2 field and comes from template v3
+                    # (kg dolomite/ha) has no v2 field and comes from template v3; L71: magnesium_from_fertilizer
+                    # is the Mg of the fertilisers other than dolomite. L72: quicklime_applied and
+                    # hydrated_lime_applied (kg product/ha) have no v2 field and come from template v3
                     #Irrigation rules
                     "irrigation_types_proportions": MapMappingRule(_IRR_ENUM_TO_FIELD),
                     "irrigation_water_use_proportions": MapMappingRule(_WATER_USED_ENUM_TO_FIELD),
