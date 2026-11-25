@@ -380,7 +380,7 @@ Seven metals: Cd, Cu, Zn, Pb, Ni, Cr, Hg.
 | C4 | LUC is in practice shared-responsibility only; country table frozen (FAOSTAT up to 2012); 39 countries | Open |
 | C5 | Unsourced P loss rates for vegetables, fruit trees and viticulture; legacy constants spread over Python dictionaries | Partly moved to CSV in F8 and F4 |
 | C6 | Country coverage limited to 39 hard-coded countries; `CS` = Serbia (obsolete code) | Open |
-| C7 | Greenhouse lifetime = orchard lifetime (20 years) | Open |
+| C7 | Greenhouse lifetime = orchard lifetime (20 years) | L51 (amount in m2*year like the land occupation; the lifetimes of structure and film are inside the annualised ecoinvent greenhouse and tunnel datasets) |
 
 ### D. Architecture and ecoinvent integration
 
