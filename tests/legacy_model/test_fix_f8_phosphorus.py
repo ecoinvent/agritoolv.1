@@ -9,8 +9,8 @@ from models.pmodel import LandUseCategory, PModel
 BASE_INPUTS = {
     "crop_cycle_per_year": 1.0, "drained_part": 0.0, "eroded_soil": 0.0,
     "land_use_category": LandUseCategory.arable_land, "known_slope_pct": None,
-    "p2o5_in_liquid_manure": 0.0, "p2o5_in_liquid_sludge": 0.0, "p2O5_from_mineral_fert": 0.0,
-    "p2o5_in_solid_manure": 0.0,
+    "p2o5_in_liquid_manure": 0.0, "p2o5_in_liquid_sludge": 0.0, "p2o5_in_solid_sludge": 0.0,
+    "p2o5_in_compost": 0.0, "p2O5_from_mineral_fert": 0.0, "p2o5_in_solid_manure": 0.0,
 }
 
 

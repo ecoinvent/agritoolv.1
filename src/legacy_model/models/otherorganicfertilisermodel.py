@@ -1,3 +1,4 @@
+import warnings
 from enum import Enum
 
 import dataloader
@@ -28,7 +29,7 @@ class OtherOrganicFertModel(object):
 
     Outputs:
       computeP2O5:
-        P2O5_total_otherfert: kg P2O5/ha
+        (liquid sewage sludge, dehydrated and dried sewage sludge, compost types): kg P2O5/ha
       computeN:
         N_total_otherfert: kg N/ha
       computeNH3:
@@ -72,9 +73,32 @@ class OtherOrganicFertModel(object):
             setattr(self, key, inputs[key])
             
     def computeP2O5(self):
-        """P2O5 [kg/ha] of liquid sewage sludge, the only type whose P2O5 the model counts."""
-        return (self.sludge_quantities[SludgeType.sewagesludge_liquid]
-                * self._content(SludgeType.sewagesludge_liquid, "p2o5_kg_per_t_fm") / 1000.0)
+        """P2O5 [kg/ha] for SALCA-P (Prasuhn 2006), decision L73, as three sums:
+        (liquid sewage sludge, dehydrated and dried sewage sludge, compost types).
+
+        Liquid sludge enters leaching and the slurry term of run-off, solid sludge only the slurry
+        term of run-off ("Klaerschlamm wird wie Guelle ... beruecksichtigt", p. 13), the compost types
+        the solid manure term of run-off ("Kompost wie Mist"). P2O5 per t FM from the composition
+        table; a type without a P2O5 value (no source) counts 0, with a warning when applied.
+        """
+        liquid_sludge = self._p2o5({SludgeType.sewagesludge_liquid:
+                                    self.sludge_quantities[SludgeType.sewagesludge_liquid]})
+        solid_sludge = self._p2o5({k: v for k, v in self.sludge_quantities.items()
+                                   if k != SludgeType.sewagesludge_liquid})
+        return (liquid_sludge, solid_sludge, self._p2o5(self.compost_quantities))
+
+    def _p2o5(self, quantities):
+        """sum(kg FM / 1000 x kg P2O5/t FM) over the given types [kg P2O5/ha]."""
+        total = 0.0
+        for fert_type, kg_fm in quantities.items():
+            content = self._content(fert_type, "p2o5_kg_per_t_fm")
+            if content is None:
+                if kg_fm > 0:
+                    warnings.warn("%s applied (%g kg/ha) has no P2O5 content in %s: its P is not counted "
+                                  "in the P model (decision L73)" % (fert_type.value, kg_fm, self._COMPOSITION_TABLE))
+                continue
+            total += kg_fm * content / 1000.0
+        return total
 
     def computeN(self):
         return self._sum_per_t(lambda fert_type: self._content(fert_type, "n_total_kg_per_t_fm"))

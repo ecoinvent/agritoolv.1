@@ -79,7 +79,12 @@ class ModelsSequence(object):
     def _computeOtherOrganicFertiliser(self):
         otherfertM = OtherOrganicFertModel(self.allInputs)
         self._intermediateValues["nitrogen_from_other_orga_fert"] = otherfertM.computeN()
-        self._intermediateValues["p2o5_in_liquid_sludge"] = otherfertM.computeP2O5()
+        # Decision L73: liquid sludge (leaching and run-off slurry term), dehydrated and dried sludge
+        # (run-off slurry term only), compost types (run-off manure term)
+        pres = otherfertM.computeP2O5()
+        self._intermediateValues["p2o5_in_liquid_sludge"] = pres[0]
+        self._intermediateValues["p2o5_in_solid_sludge"] = pres[1]
+        self._intermediateValues["p2o5_in_compost"] = pres[2]
         self._intermediateValues["hm_from_other_organic_fert"] = otherfertM.computeHeavyMetal()
         self._intermediateValues["ammonia_due_to_other_orga_fert"] = otherfertM.computeNH3()
         self._intermediateValues["soluble_nitrogen_from_organic_fert"] = \
