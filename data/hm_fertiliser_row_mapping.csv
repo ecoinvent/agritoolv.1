@@ -27,3 +27,6 @@ fert_zn_zinc_sulfate,Zn,elemental_zinc,1,stoichiometric: 1 kg Zn = 1e6 mg Zn (no
 fert_zn_zinc_oxide,Zn,elemental_zinc,1,stoichiometric: 1 kg Zn = 1e6 mg Zn (no Table 1 row); approved in chat 2026-10-10,confirmed,FC
 fert_zn_other,Zn,elemental_zinc,1,stoichiometric: 1 kg Zn = 1e6 mg Zn; approved in chat 2026-10-10,confirmed,FC
 magnesium_from_fertilizer,Mg,Mg magnesium (kg Mg),1,new input: Mg fertilisers were ignored by the legacy heavy-metal model (recommendation 7); approved in chat 2026-10-10,confirmed,FC
+dolomite_applied,Mg,Mg magnesium (kg Mg),1,"kg dolomite converted to kg Mg in fertilisermodel.py with M(Mg) / M(CaMg(CO3)2) = 0.1318 (atomicmass.py); decision L71, template v3 T19 (rejected: the Ca of the dolomite on the row Ca limestone)",proposed,
+quicklime_applied,Ca,Ca limestone (kg Ca),1,"kg quicklime (CaO) converted to kg Ca in fertilisermodel.py with M(Ca) / M(CaO) = 0.7147 (atomicmass.py); Table 1 has no row of burnt lime, the limestone row is per kg Ca; decision L72, template v3 T20",proposed,
+hydrated_lime_applied,Ca,Ca limestone (kg Ca),1,"kg hydrated lime (Ca(OH)2) converted to kg Ca in fertilisermodel.py with M(Ca) / M(Ca(OH)2) = 0.5409 (atomicmass.py); Table 1 has no row of slaked lime, the limestone row is per kg Ca; decision L72, template v3 T20",proposed,
