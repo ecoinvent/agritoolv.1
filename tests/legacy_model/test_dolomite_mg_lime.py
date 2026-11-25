@@ -161,3 +161,18 @@ def test_packaging_counts_the_stoichiometric_nutrient_of_the_products(product, k
     for key in ("m_Pack_wfldb_packaging_liquid", "m_Pack_ecoinvent_packaging_liquid"):
         assert out[key] == ref[key], key
     assert set(NEW_INPUTS) <= set(PackModel._input_variables)
+
+
+def test_new_mapping_and_alignment_rows_are_signed():
+    import dataloader
+    hm = dataloader.table("hm_fertiliser_row_mapping.csv", numeric=False)
+    assert {k: hm[k]["salca2023_row"] for k in NEW_INPUTS} == {"dolomite_applied": "Mg magnesium (kg Mg)",
+                                                               "quicklime_applied": "Ca limestone (kg Ca)",
+                                                               "hydrated_lime_applied": "Ca limestone (kg Ca)"}
+    assert all(hm[k]["status"] == "confirmed" and hm[k]["reviewed_by"] == "FC 2026-11-25" for k in NEW_INPUTS)
+    alignment = {r["model_variable"]: r for r in dataloader.rows("intermediate_exchange_alignment.csv")}
+    assert {k: alignment[k]["md312_name"] for k in ("quicklime_applied", "hydrated_lime_applied")} == {
+        "quicklime_applied": "quicklime, milled, loose", "hydrated_lime_applied": "hydrated lime, loose"}
+    for k in ("quicklime_applied", "hydrated_lime_applied"):
+        assert alignment[k]["status"] == "confirmed" and alignment[k]["reviewed_by"] == "FC 2026-11-25"
+        assert alignment[k]["md312_unit"] == "kg"
