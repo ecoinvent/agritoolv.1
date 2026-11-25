@@ -39,7 +39,7 @@ class Co2Model(object):
     The carbon of lime from algae is biogenic: Master Data 3.12 "limestone, from algae" has
     carbon content, fossil 0 and carbon content, non-fossil 0.107 (CaCO3 of the algae).
     Oxides and hydroxides of lime (CaO, Ca(OH)2) contain no inorganic carbon and give no CO2 (IPCC 2006
-    p. 11.27, Step 1); the model has no such fertiliser type.
+    p. 11.27, Step 1): quicklime_applied and hydrated_lime_applied are not inputs of this model (decision L72).
     """
     _input_variables = ["n_fertiliser_quantities",
                         "part_of_urea_in_UAN",

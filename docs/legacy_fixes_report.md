@@ -3232,3 +3232,59 @@ briquettes 314.5 -> 219.6, pellets 170.4 -> 127.8, chips 183.5 -> 76.9, logs 155
 | rice_IN | - | unchanged | unchanged |
 
 No other key changes: the three cases declare no petrol, flaming, decompactation, `*_other` diesel or `energy_*` fuel.
+
+## 57. Dolomite, Mg fertiliser, quicklime and hydrated lime as independent inputs (decisions L71, L72, 2026-11-25)
+
+Model side of the template v3 decisions T19 (dolomite and Mg) and T20 (quicklime and hydrated lime).
+
+### Inputs
+
+| Input | Unit | Default | Exchange | CO2 | Heavy metals (SALCAheavymetal 2023 Table 1) |
+|---|---|---|---|---|---|
+| `magnesium_from_fertilizer` | kg Mg/ha, fertilisers other than dolomite | 0 | magnesium sulfate, kg Mg x 120.3686 / 24.305 | none | row "Mg magnesium", kg Mg |
+| `dolomite_applied` | kg CaMg(CO3)2/ha | 0 | dolomite, as it is | 2 x 44.0095 / 184.4008 = 0.47732 kg/kg (L67) | row "Mg magnesium", kg x 24.305 / 184.4008 = 0.131805 kg Mg/kg |
+| `quicklime_applied` | kg CaO/ha | 0 | 'quicklime, milled, loose', as it is | none | row "Ca limestone", kg x 40.078 / 56.0774 = 0.714691 kg Ca/kg |
+| `hydrated_lime_applied` | kg Ca(OH)2/ha | 0 | 'hydrated lime, loose', as it is | none | row "Ca limestone", kg x 40.078 / 74.09268 = 0.540916 kg Ca/kg |
+
+Atomic masses of `models/atomicmass.py` (H 1.00794, C 12.0107, O 15.9994, Mg 24.3050, S 32.066, Ca 40.078). The
+rows "Mg magnesium" and "Ca limestone" of Table 1 have the same contents per kg (Cd 0.12, Cu 4, Zn 8, Pb 3.6, Ni 12.2,
+Cr 314, Hg 0.446 mg/kg).
+
+### Change from L67
+
+`magnesium_fertiliser_split(magnesium, dolomite)` returns (magnesium x M(MgSO4) / M(Mg), dolomite). Under L67 the Mg of
+the dolomite was subtracted from the Mg total and the rest, not below 0, was magnesium sulfate, with a warning when the
+dolomite carried more Mg than the total. Example 30 kg Mg + 100 kg dolomite: L67 83.297 kg MgSO4, L71 148.573 kg MgSO4
+(the 30 kg Mg are now Mg of the other fertilisers only). The heavy metals of the dolomite were counted only through the
+Mg total; they are now added from `dolomite_applied` (new row `dolomite_applied` of `hm_fertiliser_row_mapping.csv`).
+
+### Packaging
+
+`packmodel.py` sums the kg of nutrient of the fertilisers (N, P2O5, K2O, Mg, Ca, Zn) and multiplies the
+solid part by the existing dilution factors (2.0 WFLDB, 2.0 ecoinvent; legacy, provisional). The stoichiometric Mg
+of the dolomite and Ca of quicklime and hydrated lime are added to that total, with the same factors as for the heavy
+metals (`fertilisermodel.PRODUCT_TO_NUTRIENT_FACTORS`): 100 kg dolomite -> +13.1805 kg, 100 kg quicklime -> +71.469
+kg, 100 kg hydrated lime -> +54.092 kg, solid packaging +2 x these values. Under L67 the Mg of the dolomite was in the
+Mg total and so in the packaging; with independent inputs it would otherwise be lost.
+
+### Tests (`tests/legacy_model/test_dolomite_mg_lime.py`)
+
+- Split: 30 kg Mg + 100 kg dolomite -> 148.573 kg MgSO4 and 100 kg dolomite, no warning; dolomite alone -> (0, 100).
+- Heavy metals: 100 kg dolomite = 13.1805 kg Mg on the row "Mg magnesium"; 30 kg Mg + 100 kg dolomite = 43.1805 kg Mg;
+  100 kg quicklime = 71.469 kg Ca and 100 kg hydrated lime = 54.092 kg Ca on the row "Ca limestone" (rel 1e-5).
+- Defaults 0; quicklime and hydrated lime are not inputs of `Co2Model`.
+- Packaging (base total 116 kg of nutrient): +13.1805 (dolomite), +71.469 (quicklime), +54.092 (hydrated lime)
+  kg in the fertiliser total; solid packaging WFLDB and ecoinvent +2 x these values; liquid packaging unchanged.
+- Model sequence (wheat_IT): 30 kg Mg + 100 kg dolomite -> CO2 +47.732 kg, exchanges 100 kg dolomite and 148.573 kg
+  MgSO4, more Cd to soil; 100 kg quicklime or hydrated lime -> CO2 (fossil and non-fossil) unchanged, exchange 100 kg,
+  more Cd to soil.
+- `test_co2_lime_urea.py`: the three tests of the L67 subtraction (rest as MgSO4, warning, model sequence 83.297 kg) are
+  replaced by the tests above.
+
+### Regression
+
+| Case | Key | Before | After |
+|---|---|---|---|
+| wheat_IT, rice_IN, apple_FR | `quicklime_applied`, `hydrated_lime_applied` | (no key) | 0 |
+
+No other key changes: the three cases declare no Mg, dolomite, quicklime or hydrated lime.

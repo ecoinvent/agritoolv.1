@@ -21,6 +21,9 @@ def _model(n, share_normal_ph, cultivation_type="open_ground", crop="wheat"):
         "ca_fertiliser_quantities": dict.fromkeys(CaFertiliserType, 0.0),
         "zn_fertiliser_quantities": dict.fromkeys(ZnFertiliserType, 0.0),
         "magnesium_from_fertilizer": 0.0,
+        "dolomite_applied": 0.0,
+        "quicklime_applied": 0.0,
+        "hydrated_lime_applied": 0.0,
         "soil_with_ph_under_or_7": share_normal_ph,
         "cultivation_type": cultivation_type,
         "crop": crop,
@@ -74,7 +77,16 @@ def test_nh3_is_the_ph_weighted_sum_in_kg_nh3():
     assert model.computeNH3() == pytest.approx(expected)
 
 
-def test_hydroponic_greenhouses_count_as_normal_ph():
-    model = _model({NFertiliserType.ammonium_sulphate: 100.0}, 0.0, "greenhouse_hydroponic_heated")
-    assert model.computeNH3() == pytest.approx(100.0 * 0.084)
+@pytest.mark.parametrize("share_normal_ph", [0.0, 0.3, 0.8, 1.0])
+@pytest.mark.parametrize("cultivation_type", ["greenhouse_hydroponic", "greenhouse_hydroponic_heated"])
+def test_hydroponic_greenhouses_use_the_normal_ph_factor_whatever_the_soil_share(cultivation_type, share_normal_ph):
+    # decision L70: nutrient solutions are kept at pH 5.5-6.5, so share_normal_ph = 1
+    n = {NFertiliserType.urea: 100.0, NFertiliserType.ammonium_sulphate: 50.0}
+    model = _model(n, share_normal_ph, cultivation_type)
+    assert model.computeNH3() == pytest.approx(100.0 * 0.195 + 50.0 * 0.084)
+
+
+def test_soil_greenhouses_keep_the_given_ph_share():
+    model = _model({NFertiliserType.ammonium_sulphate: 100.0}, 0.0, "greenhouse_glass_roof")
+    assert model.computeNH3() == pytest.approx(100.0 * 0.187)
     assert _model({NFertiliserType.ammonium_sulphate: 100.0}, 0.0).computeNH3() == pytest.approx(100.0 * 0.187)
