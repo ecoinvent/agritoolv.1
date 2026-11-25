@@ -3258,12 +3258,23 @@ dolomite carried more Mg than the total. Example 30 kg Mg + 100 kg dolomite: L67
 (the 30 kg Mg are now Mg of the other fertilisers only). The heavy metals of the dolomite were counted only through the
 Mg total; they are now added from `dolomite_applied` (new row `dolomite_applied` of `hm_fertiliser_row_mapping.csv`).
 
+### Packaging
+
+`packmodel.py` sums the kg of nutrient of the fertilisers (N, P2O5, K2O, Mg, Ca, Zn) and multiplies the
+solid part by the existing dilution factors (2.0 WFLDB, 2.0 ecoinvent; legacy, provisional). The stoichiometric Mg
+of the dolomite and Ca of quicklime and hydrated lime are added to that total, with the same factors as for the heavy
+metals (`fertilisermodel.PRODUCT_TO_NUTRIENT_FACTORS`): 100 kg dolomite -> +13.1805 kg, 100 kg quicklime -> +71.469
+kg, 100 kg hydrated lime -> +54.092 kg, solid packaging +2 x these values. Under L67 the Mg of the dolomite was in the
+Mg total and so in the packaging; with independent inputs it would otherwise be lost.
+
 ### Tests (`tests/legacy_model/test_dolomite_mg_lime.py`)
 
 - Split: 30 kg Mg + 100 kg dolomite -> 148.573 kg MgSO4 and 100 kg dolomite, no warning; dolomite alone -> (0, 100).
 - Heavy metals: 100 kg dolomite = 13.1805 kg Mg on the row "Mg magnesium"; 30 kg Mg + 100 kg dolomite = 43.1805 kg Mg;
   100 kg quicklime = 71.469 kg Ca and 100 kg hydrated lime = 54.092 kg Ca on the row "Ca limestone" (rel 1e-5).
 - Defaults 0; quicklime and hydrated lime are not inputs of `Co2Model`.
+- Packaging (base total 116 kg of nutrient): +13.1805 (dolomite), +71.469 (quicklime), +54.092 (hydrated lime)
+  kg in the fertiliser total; solid packaging WFLDB and ecoinvent +2 x these values; liquid packaging unchanged.
 - Model sequence (wheat_IT): 30 kg Mg + 100 kg dolomite -> CO2 +47.732 kg, exchanges 100 kg dolomite and 148.573 kg
   MgSO4, more Cd to soil; 100 kg quicklime or hydrated lime -> CO2 (fossil and non-fossil) unchanged, exchange 100 kg,
   more Cd to soil.

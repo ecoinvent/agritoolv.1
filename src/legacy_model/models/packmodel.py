@@ -1,4 +1,4 @@
-from models.fertilisermodel import NFertiliserType
+from models.fertilisermodel import NFertiliserType, PRODUCT_TO_NUTRIENT_FACTORS
 class PackModel(object):
     """Inputs:
         nitrogen_from_mineral_fert: kg N/ha
@@ -7,6 +7,8 @@ class PackModel(object):
         magnesium_from_fertilizer: kg Mg/ha
         ca_from_mineral_fert: kg Ca/ha
         zn_from_mineral_fert: kg Zn/ha
+        dolomite_applied: kg dolomite/ha, counted as its stoichiometric Mg (decision L71)
+        quicklime_applied, hydrated_lime_applied: kg product/ha, counted as their stoichiometric Ca (decision L72)
         n_fertiliser_quantities: Map NFertiliserType -> kg N/ha
         pest_total: g/ha
         pest_horticultural_oil: kg / ha
@@ -24,6 +26,9 @@ class PackModel(object):
                         "magnesium_from_fertilizer",
                         "ca_from_mineral_fert",
                         "zn_from_mineral_fert",
+                        "dolomite_applied",
+                        "quicklime_applied",
+                        "hydrated_lime_applied",
                         "n_fertiliser_quantities",
                         "pest_total",
                         "pest_horticultural_oil"
@@ -59,7 +64,8 @@ class PackModel(object):
                 + self.k2O_from_mineral_fert \
                 + self.magnesium_from_fertilizer \
                 + self.ca_from_mineral_fert \
-                + self.zn_from_mineral_fert
+                + self.zn_from_mineral_fert \
+                + sum(getattr(self, product) * factor for product, factor in PRODUCT_TO_NUTRIENT_FACTORS.items())
 
     def _computeFertilisers(self, totalFert):
         liquid = self.n_fertiliser_quantities[NFertiliserType.ammonia_liquid]

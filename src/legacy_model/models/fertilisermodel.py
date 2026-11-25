@@ -5,6 +5,13 @@ from models.atomicmass import (HYDRATED_LIME_TO_Ca_FACTOR, MG_TO_DOLOMITE_FACTOR
                                QUICKLIME_TO_Ca_FACTOR)
 from models.modelEnums import HeavyMetalType
 
+# Products given in kg of product -> kg of nutrient by stoichiometry: dolomite -> Mg (decision L71), quicklime and
+# hydrated lime -> Ca (decision L72). Used for the heavy metals (Table 1 rows "Mg magnesium" and "Ca limestone")
+# and for the fertiliser total of the packaging (packmodel.py).
+PRODUCT_TO_NUTRIENT_FACTORS = {"dolomite_applied": 1.0 / MG_TO_DOLOMITE_FACTOR,
+                               "quicklime_applied": QUICKLIME_TO_Ca_FACTOR,
+                               "hydrated_lime_applied": HYDRATED_LIME_TO_Ca_FACTOR}
+
 
 class NFertiliserType(Enum):
     ammonium_nitrate="fert_n_ammonium_nitrate"
@@ -100,12 +107,6 @@ class FertModel(object):
     _HM_ROW_MAPPING = "hm_fertiliser_row_mapping.csv"
     _ELEMENTAL_ZINC_ROW = "elemental_zinc"
     _MAGNESIUM_KEY = "magnesium_from_fertilizer"
-    # Products given in kg of product: kg of the reference nutrient of their Table 1 row by stoichiometry,
-    # dolomite -> Mg (row "Mg magnesium", decision L71), quicklime and hydrated lime -> Ca (row "Ca limestone",
-    # decision L72).
-    _PRODUCT_TO_NUTRIENT_FACTORS = {"dolomite_applied": 1.0 / MG_TO_DOLOMITE_FACTOR,
-                                    "quicklime_applied": QUICKLIME_TO_Ca_FACTOR,
-                                    "hydrated_lime_applied": HYDRATED_LIME_TO_Ca_FACTOR}
     _MG_PER_KG = 1000000.0
 
     def __init__(self, inputs):
@@ -156,7 +157,7 @@ class FertModel(object):
             for fert_type, quantity in quantities.items():
                 self._add_hm_values(total_hm_values, fert_type.value, quantity)
         self._add_hm_values(total_hm_values, self._MAGNESIUM_KEY, self.magnesium_from_fertilizer)
-        for product, factor in self._PRODUCT_TO_NUTRIENT_FACTORS.items():
+        for product, factor in PRODUCT_TO_NUTRIENT_FACTORS.items():
             self._add_hm_values(total_hm_values, product, getattr(self, product) * factor)
         return total_hm_values
 

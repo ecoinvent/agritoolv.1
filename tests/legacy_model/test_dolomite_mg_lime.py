@@ -3,10 +3,12 @@
 L71: dolomite and the Mg fertiliser are two independent inputs. `magnesium_from_fertilizer` is the kg Mg/ha of the
 fertilisers other than dolomite, written as magnesium sulfate; `dolomite_applied` (kg product/ha) is written as it
 is, with nothing subtracted. The heavy metals of the dolomite enter the SALCAheavymetal 2023 Table 1 row
-"Mg magnesium" with its stoichiometric Mg, M(Mg) / M(CaMg(CO3)2).
+"Mg magnesium" with its stoichiometric Mg, M(Mg) / M(CaMg(CO3)2), and the same Mg enters the fertiliser total of
+the packaging.
 
 L72: quicklime (CaO) and hydrated lime (Ca(OH)2), kg product/ha: no CO2 (no carbonate), heavy metals with their
-stoichiometric Ca on the row "Ca limestone", exchanges with the Master Data 3.12 products.
+stoichiometric Ca on the row "Ca limestone", the same Ca in the fertiliser total of the packaging, exchanges with
+the Master Data 3.12 products.
 
 Expected values computed by hand with the atomic masses of models/atomicmass.py (H 1.00794, C 12.0107,
 O 15.9994, Mg 24.3050, S 32.066, Ca 40.078; CaMg(CO3)2 184.4008, MgSO4 120.3686, CaO 56.0774, Ca(OH)2 74.09268).
@@ -22,6 +24,7 @@ from models.co2model import Co2Model
 from models.fertilisermodel import (CaFertiliserType, FertModel, KFertiliserType, NFertiliserType,
                                     PFertiliserType, ZnFertiliserType)
 from models.modelEnums import HeavyMetalType
+from models.packmodel import PackModel
 from outputMapping import magnesium_fertiliser_split
 
 NEW_INPUTS = ("dolomite_applied", "quicklime_applied", "hydrated_lime_applied")
@@ -128,3 +131,33 @@ def test_model_sequence_lime_gives_no_co2_and_writes_the_product(product):
     assert out[product] == 100.0
     assert base[product] == 0.0
     assert out["heavymetal_to_soil_cd"] > base["heavymetal_to_soil_cd"]
+
+
+# --- packaging: kg of nutrient of the fertiliser total (L71, L72) ---
+
+def _packaging(**products):
+    inputs = {"nitrogen_from_mineral_fert": 50.0, "p2O5_from_mineral_fert": 20.0, "k2O_from_mineral_fert": 10.0,
+              "magnesium_from_fertilizer": 5.0, "ca_from_mineral_fert": 30.0, "zn_from_mineral_fert": 1.0,
+              "n_fertiliser_quantities": dict.fromkeys(NFertiliserType, 0.0),
+              "pest_total": 0.0, "pest_horticultural_oil": 0.0}
+    inputs.update(dict.fromkeys(NEW_INPUTS, 0.0))
+    inputs.update(products)
+    return PackModel(inputs)
+
+
+@pytest.mark.parametrize("product, kg_nutrient", [("dolomite_applied", 13.1805),
+                                                  ("quicklime_applied", 71.469),
+                                                  ("hydrated_lime_applied", 54.092)])
+def test_packaging_counts_the_stoichiometric_nutrient_of_the_products(product, kg_nutrient):
+    # dolomite 100 x 24.305 / 184.4008 kg Mg; quicklime 100 x 40.078 / 56.0774 and hydrated lime
+    # 100 x 40.078 / 74.09268 kg Ca; solid packaging = total x the dilution factors (2.0 WFLDB, 2.0 ecoinvent)
+    base = _packaging()
+    model = _packaging(**{product: 100.0})
+    assert base._computeTotalFertilisers() == pytest.approx(116.0)
+    assert model._computeTotalFertilisers() - 116.0 == pytest.approx(kg_nutrient, abs=5e-4)
+    out, ref = model.compute(), base.compute()
+    for key in ("m_Pack_wfldb_packaging_solid", "m_Pack_ecoinvent_packaging_solid"):
+        assert out[key] - ref[key] == pytest.approx(2.0 * kg_nutrient, abs=1e-3), key
+    for key in ("m_Pack_wfldb_packaging_liquid", "m_Pack_ecoinvent_packaging_liquid"):
+        assert out[key] == ref[key], key
+    assert set(NEW_INPUTS) <= set(PackModel._input_variables)
