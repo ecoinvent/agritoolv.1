@@ -129,6 +129,9 @@ of template v2.
 | `rice_preseason_water_regime` | list | O, N | - | Flooded crops only. Water regime before the cultivation period, Table 5.13: not flooded for less than 180 days, not flooded for more than 180 days, flooded for more than 30 days, not flooded for more than 365 days (upland crop - paddy rotation or fallow without flooding). Sets SF_p of the rice CH4 (L66). N/A -> aggregated SF_p 1.22 (T17) |
 | `rice_cultivation_period_days` | days | O, N | - | Flooded crops only. Days of the rice cultivation period (transplanting or sowing to harvest), not the crop cycle of `crop_cycle_duration`, which runs from harvest to harvest. N/A -> default of Table 5.11A for the IPCC rice region of the country (L66, e.g. South Asia 112, Europe 123, World 113) (T17) |
 | `irrigation_water_nitrate`, `irrigation_water_nitrate_unit` | mg NO3/l or mg NO3-N/l | O, N | - | Only when `irrigated` = yes. Nitrate concentration of the irrigation water, an N input of the nitrogen balance of the nitrate leaching (model decision to come, section 5.12): N (kg/ha and crop cycle) = concentration x irrigation water (m3/ha) / 1000, with mg NO3/l x 14/62 (conversion factors in the unit table of the reader). N/A -> 0 (T18) |
+| `grain_drying` | yes/no | O, N | - | Only for the crops with EMEP/EEA 2023 3.D factors for drying (wheat, rye, barley, oats; Tables 3-6 to 3-9); N/A -> no. When yes, PM10 and PM2.5 of drying, one pass per crop cycle (L68 set N = 0 for want of this field; T22) |
+| `grain_moisture_at_harvest`, `grain_moisture_after_drying` | % of fresh mass | R if `grain_drying` = yes, N | - | Water evaporated = yield x (m_harvest - m_dried) / (100 - m_dried), the amount of the drying input if T22 open point (a) is confirmed |
+| `grain_cleaning` | yes/no | O, N | - | Same crops as `grain_drying`; N/A -> no. When yes, PM10 and PM2.5 of cleaning, one pass per crop cycle (T22) |
 | `drained_share` | % of area | O | `drainage` | Default 0 (L5) |
 | `tillage` | list | O | `tillage_method` | fall plough, spring plough, mulch tillage, ridge tillage, zone tillage, no till, unknown (`erosion_tillage_mapping.csv`; the legacy key of fall plough is spelled `fall_plaw`). Default "unknown" = conventional tillage, C_tillage 1 (L59); section 5.13 |
 | `anti_erosion_practice` | list | O | `anti_erosion_practice` | no practice, contour farming, strip cropping on the contour, terraces, unknown (`erosion_practice_mapping.csv`; cross slope and strip cropping cross slope are not offered, L62). Default "unknown": P of Panagos et al. (2015b) in the EU, 1 elsewhere (L62); section 5.13 |
@@ -173,12 +176,35 @@ One row per product and dataset. `item` is one of:
   ammonia), with `unit` = kg product, kg N, kg P2O5 or kg K2O;
 - a **total mineral nutrient** when the products are unknown (`mineral N total`, `mineral P2O5
   total`, `mineral K2O total`): the tool splits it with the country mix (L45);
-- a **lime or micronutrient** (limestone, carbonation lime, seaweed lime, dolomite, Mg fertiliser,
-  zinc sulfate, zinc oxide, other Zn, borax, gypsum, kaolin, manganese sulfate, portafer, sulfite);
+- a **lime or micronutrient** (limestone, carbonation lime, seaweed lime, dolomite, quicklime (CaO),
+  hydrated lime (Ca(OH)2), Mg fertiliser, zinc sulfate, zinc oxide, other Zn, borax, gypsum, kaolin,
+  manganese sulfate, portafer, sulfite), with the units and rules of the list below (T19, T20);
 - a **manure** type (liquid: cattle, pig, laying hens, other, in m3; solid: cattle, pig, sheep and
   goats, laying hens, horses, other, in t), with the dilution of liquid manure as optional column
   (default 0.5, legacy);
 - a **compost or sewage sludge** type (the types of `organic_fertiliser_composition.csv`), in t FM.
+
+Lime, dolomite and magnesium (T19, T20, FC 2026-11-25):
+
+- **Dolomite**: kg of product per ha (not kg Mg, not kg CaCO3); model input `dolomite_applied`.
+  Guidance text: "Enter the amount of dolomite applied as kg of product per ha (not kg Mg, not kg
+  CaCO3). CO2 emissions are calculated as 0.477 kg CO2 per kg dolomite (stoichiometric, pure
+  dolomite, consistent with IPCC 2006 Vol. 4 Ch. 11 Eq. 11.12). Do not report the same material
+  under lime/limestone." Written as the Master Data product `dolomite`. Its heavy metals enter the
+  SALCAheavymetal balance with the Mg of the dolomite (stoichiometric, 0.1318 kg Mg/kg) on the row
+  "Mg magnesium" of Table 1, as before L67 when the Mg of the dolomite was part of the Mg total.
+- **Mg fertiliser**: kg Mg per ha applied with fertilisers **other than dolomite**; model input
+  `magnesium_from_fertilizer`. The two inputs are independent: no Mg of the dolomite is subtracted
+  (replaces the subtraction of L67, model change by VS Code). Guidance text: "Enter the magnesium
+  applied with fertilisers other than dolomite, as kg Mg per ha. It is modelled as magnesium
+  sulphate (no field CO2 emission)." Written as `magnesium sulfate`; a provider who uses another Mg
+  form (MgO, magnesium nitrate) is told so by this text.
+- **Quicklime (CaO)** and **hydrated lime (Ca(OH)2)**: kg of product per ha; no field CO2 (no
+  carbonate; the CO2 of calcination is in the production datasets). Written as the Master Data
+  products of quicklime and hydrated lime (ecoCalc v4 has `quicklime, milled, loose` and
+  `hydrated lime, loose`; the Master Data 3.12 names are checked by `check_master_data.py`). Heavy
+  metals: stoichiometric Ca on the row "Ca limestone" of Table 1, per kg Ca, as for limestone.
+- Limestone, carbonation lime and seaweed lime are unchanged (CO2 of L67 and L17).
 
 Defaults when the dataset has no fertiliser row: mineral N, P2O5, K2O (L28-L37, L53), mix (L45),
 manure (L29, L40, L42). Compound fertilisers are counted with the rule of R8 (one exchange, mass =
@@ -253,7 +279,8 @@ Open points:
   UUIDs come from the pipeline's lookup): the Master Data version that holds them is to be
   confirmed for the alignment tables;
 - an operation not in the list: free text with its diesel, written as
-  `diesel, burned in agricultural machinery` (MJ, with the 42.8 MJ/kg of the Master Data);
+  `diesel, burned in agricultural machinery` (MJ, with 45.0 MJ/kg, the inverse of the diesel
+  input of that dataset; L69, T21);
 - a provider who knows only the total diesel of the dataset gives it once (item `total diesel`,
   FC 2026-10-27, case 2 of the pipeline): it is split over the listed operations without their own
   diesel in proportion to intensity x passes, z x a / (a + b + ...), where a, b are the kg/ha of
@@ -726,7 +753,7 @@ These fields are needed only if the corresponding model is adopted (decisions of
 ## 10. Next steps
 
 1. FC reviews this specification and answers Q1-Q10 (done 2026-11-02).
-2. Record the decisions in `docs/DECISIONS.md` (T1-T13, 2026-11-02; T14-T16 and the closing of T1, T6 and T9, 2026-11-06; T17 and T18, 2026-11-09).
+2. Record the decisions in `docs/DECISIONS.md` (T1-T13, 2026-11-02; T14-T16 and the closing of T1, T6 and T9, 2026-11-06; T17 and T18, 2026-11-09; T19-T22, realignment with L67-L69, 2026-11-25).
 3. Build script for the `Lists` sheet from `data/`, and the empty template v3 in `templates/`.
 4. Reader with validation and provenance, with tests on example workbooks.
 5. Adapter from the reader output to the inputs of `src/legacy_model/` (one run per dataset).
