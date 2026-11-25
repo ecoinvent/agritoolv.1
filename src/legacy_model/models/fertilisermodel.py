@@ -109,7 +109,7 @@ class FertModel(object):
         """
         share_normal_ph = self.soil_with_ph_under_or_7
         if self.cultivation_type.startswith("greenhouse_hydroponic"):
-            # legacy, undocumented, provisional: hydroponic greenhouses count as normal pH
+            # nutrient solutions are kept at pH 5.5-6.5, so the normal-pH class (decision L70)
             share_normal_ph = 1.0
         flooded = dataloader.table("crop_types.csv", numeric=False)[self.crop]["flooded"] == "yes"
         total = 0.0
