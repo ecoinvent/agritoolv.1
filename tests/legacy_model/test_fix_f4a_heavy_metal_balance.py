@@ -131,7 +131,8 @@ def test_unmapped_crop_names_the_mapping_table():
 
 def test_harvest_export_generator_uses_2023_products_and_coproducts():
     gen = HeavyMetalExportWithHarvestGenerator()
-    base = {"yield_BP1_per_crop_cycle": "", "yield_BP2_per_crop_cycle": "", "yield_BP3_per_crop_cycle": ""}
+    base = {"yield_BP1_per_crop_cycle": "", "yield_BP2_per_crop_cycle": "", "yield_BP3_per_crop_cycle": "",
+            "coproducts": []}
     wheat = gen.generateDefault("", dict(base, crop="wheat", yield_main_product_dry_per_crop_cycle=8000.0))
     assert wheat[HeavyMetalType.zn] == pytest.approx(8000 * 17.2)      # wheat grains, Table 1
     assert wheat[HeavyMetalType.cd] == pytest.approx(8000 * 0.048)

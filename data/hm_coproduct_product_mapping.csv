@@ -1,0 +1,7 @@
+md312_product,crop,salca2023_product,status,note,reviewed_by
+straw,wheat,wheat straw,proposed,straw of the crop: Table 1 row wheat straw,
+straw,any,"co-product, mean",proposed,"no straw row in Table 1 for the other crops of the tool (barley, rye and triticale straw are not crops of crop_types.csv)",
+coconut husk,any,"co-product, mean",proposed,not in Table 1,
+biowaste,any,green waste shredding,proposed,plant residue removed from the field; closest Table 1 row,
+"waste wood, untreated",any,wood chips,proposed,wood removed from the field (e.g. prunings); closest Table 1 row,
+linseed,any,"main product, mean",proposed,not in Table 1; same row as the main product of the linseed crop (hm_crop_product_mapping_salca2023.csv),

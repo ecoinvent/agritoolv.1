@@ -181,6 +181,7 @@ by `scripts/netcdf_classic.py`).
 | `hm_salca2023_table1.csv` | Nemecek et al. (2023) SALCAheavymetal V1.0, Table 1 | model | Metal contents of plant products, fertilisers, manure, organic fertilisers and pesticides for the heavy-metal balance (L10). |
 | `hm_crop_product_mapping_salca2023.csv` | AgriToolV.1 | model | Tool crops -> SALCA plant products (harvest export and seed input). |
 | `hm_coproduct_mapping.csv` | AgriToolV.1 | model | By-products -> SALCA "co-product, mean". |
+| `hm_coproduct_product_mapping.csv` | AgriToolV.1 | model | Removed co-products of the input `coproducts` (Master Data products of `coproduct_list.csv`) -> SALCA Table 1 rows, per crop or for any crop: their harvest export (L75). |
 | `hm_fertiliser_row_mapping.csv` | AgriToolV.1 | model | Mineral fertiliser types -> SALCA fertiliser rows. |
 | `hm_manure_class_mapping.csv` | AgriToolV.1 | model | Manure types -> SALCA farmyard manure rows. |
 | `hm_organic_fertiliser_mapping.csv` | AgriToolV.1 | model | Compost and sludge types -> SALCA organic fertiliser rows. |
