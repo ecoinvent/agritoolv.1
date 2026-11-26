@@ -3420,7 +3420,7 @@ fresh mass x Master Data 3.12 dry mass x concentration (mg/kg DM) of a Table 1 r
 export nothing; fate `burned` is an error. The legacy fields `yield_BP1..3_per_crop_cycle` are unchanged (row
 "co-product, mean", DM 0.6, R5).
 
-### Mapping (`data/hm_coproduct_product_mapping.csv`, proposed)
+### Mapping (`data/hm_coproduct_product_mapping.csv`, signed by FC 2026-11-26, R10)
 
 | Master Data product | Crop | Table 1 row | Master Data dry mass | Zn (mg/kg DM) |
 |---|---|---|---|---|
