@@ -164,6 +164,24 @@ Fate (Q8, decided by FC on 2026-11-02):
 - `burned`: not supported yet, the reader stops with an error, because the model has no emissions
   of residue burning; to be added with a burning model.
 
+Co-products, carbon and allocation (T23, FC 2026-11-26, walkthrough B6):
+
+- The `coproduct` list holds Master Data 3.12 products only; the writer takes their properties
+  (dry mass, carbon content, price) from the Master Data and adds none of its own (O4). In the v4
+  format the properties belong to the product, so the dataset needs only a valid product.
+- How a `removed` co-product is written follows its Master Data by-product classification:
+  - `allocatable product` (e.g. straw): functional flow, economic allocation (ecoinvent default)
+    with the Master Data price;
+  - `Recyclable` (e.g. coconut husk): non-functional output (no burden under the cut-off model);
+  - `Waste` (e.g. biowaste, waste wood, untreated): waste output.
+- CO2 uptake (`Carbon dioxide, in air`) = sum over the main product and the `removed` co-products
+  of fresh mass x dry mass x carbon content, non-fossil, all from the Master Data 3.12 properties
+  of the products, so that the uptake equals the biogenic carbon of the outputs (carbon balance).
+  `left on field` co-products are not counted: their carbon returns to air and soil.
+- Gross energy (`Energy, gross calorific value, in biomass`): unchanged for now, main product only
+  (GCV table of the tool; the Master Data gives only the net heating value, and not for every
+  product). Open point.
+
 Today the residue N input comes from fixed crop formulas (legacy, undocumented, provisional) that do
 not depend on the share removed; linking it to the removed amount is a later model change.
 
@@ -753,7 +771,7 @@ These fields are needed only if the corresponding model is adopted (decisions of
 ## 10. Next steps
 
 1. FC reviews this specification and answers Q1-Q10 (done 2026-11-02).
-2. Record the decisions in `docs/DECISIONS.md` (T1-T13, 2026-11-02; T14-T16 and the closing of T1, T6 and T9, 2026-11-06; T17 and T18, 2026-11-09; T19-T22, realignment with L67-L69, 2026-11-25).
+2. Record the decisions in `docs/DECISIONS.md` (T1-T13, 2026-11-02; T14-T16 and the closing of T1, T6 and T9, 2026-11-06; T17 and T18, 2026-11-09; T19-T22, realignment with L67-L69, 2026-11-25; T23, co-products, 2026-11-26).
 3. Build script for the `Lists` sheet from `data/`, and the empty template v3 in `templates/`.
 4. Reader with validation and provenance, with tests on example workbooks.
 5. Adapter from the reader output to the inputs of `src/legacy_model/` (one run per dataset).
