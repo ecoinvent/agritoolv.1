@@ -2,6 +2,7 @@ import dateutil.relativedelta as relativedelta
 from datetime import date
 from functools import lru_cache
 import statistics
+import warnings
 
 from defaultMatrixEvapoTranspiration import EVAPO_TRANSPI_PER_CROP_PER_COUNTRY
 from defaultMatrixSeed import NB_SEEDS_PER_PARTIAL_CROP_PER_COUNTRY, \
@@ -266,8 +267,9 @@ class MainProductPropertyGenerator(object):
     """A Master Data 3.12 property of the reference product of the crop (decision L74): the product of
     data/crop_main_product.csv, its property from data/md312_product_properties.csv.
 
-    Crops without a Master Data product yet (status missing or decision in crop_main_product.csv) keep
-    the legacy table: ``fallback(crop)`` (legacy, undocumented, provisional).
+    Crops without a Master Data product (empty md312_product in crop_main_product.csv: the 8 crops signed
+    not_needed by FC, decision L76) keep the legacy table, ``fallback(crop)`` (legacy, undocumented,
+    provisional), with a warning.
     """
     def __init__(self, column, fallback):
         self._column = column
@@ -276,6 +278,9 @@ class MainProductPropertyGenerator(object):
     def generateDefault(self, field, generators):
         product = dataloader.crop_main_product(generators["crop"])
         if product is None:
+            warnings.warn("Crop '%s' has no Master Data 3.12 product in %s: %s from the legacy table (legacy, "
+                          "undocumented, provisional; decision L76)"
+                          % (generators["crop"], dataloader.MAIN_PRODUCT_TABLE, field))
             return self._fallback(generators["crop"])
         return dataloader.product_properties(product)[self._column]
 

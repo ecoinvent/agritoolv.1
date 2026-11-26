@@ -156,10 +156,7 @@ COPRODUCT_RENAME_RULES = {
 COPRODUCT_PROPOSAL_RULES = {
     "flax seeds": ("linseed", "seed of flax, the Master Data product of the linseed crop"),
 }
-COPRODUCT_DECISION_RULES = {
-    "mulberry": (["mulberry leaves"], "no mulberry fruit in the Master Data; 'mulberry leaves' is the main "
-                                      "product of the mulberry crop"),
-}
+COPRODUCT_DECISION_RULES = {}
 
 # Master Data properties copied to md312_product_properties.csv: column -> (sheet property, unit)
 PRODUCT_PROPERTIES = {

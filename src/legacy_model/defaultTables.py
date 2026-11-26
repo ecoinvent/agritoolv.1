@@ -266,7 +266,7 @@ def _ifa_mineral_fertiliser():
 IFA_MINERAL_FERTILISER_PER_CROP_PER_COUNTRY = _ifa_mineral_fertiliser()
 
 # Decision L74: read only for the crops without a Master Data 3.12 product in data/crop_main_product.csv (status
-# missing or decision); the other crops take the carbon content, non-fossil of their product (legacy, undocumented,
+# not_needed, decision L76: blueberry, cassava, cranberry, ginger, guar, citruslime, raspberry, turmeric); the other crops take the carbon content, non-fossil of their product (legacy, undocumented,
 # provisional for the crops that still read it).
 #Generated from GD_crop GrossEnergy_C_L1 column D, kgC/kgDM
 # Mireille&Raphaël for Bell pepper, cabbage, cashew, cassava, chilli, cotton, eggplant, flax, grape, guar, hemp, lentil, mango, mulberry
@@ -1092,7 +1092,7 @@ ROOTING_DEPTH_PER_CROP = {
 }
 
 # Decision L74: read only for the crops without a Master Data 3.12 product in data/crop_main_product.csv (status
-# missing or decision); the other crops take the dry mass of their product (legacy, undocumented,
+# not_needed, decision L76: blueberry, cassava, cranberry, ginger, guar, citruslime, raspberry, turmeric); the other crops take the dry mass of their product (legacy, undocumented,
 # provisional for the crops that still read it).
 #From GD_crop WaterNutrient_L1 column C
 #  Mireille&Raphaël for Bell pepper, cabbage, cashew, cassava, chilli, cotton, eggplant, flax, grape, guar, hemp, lentil, mango, mulberry

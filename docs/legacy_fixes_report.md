@@ -3446,3 +3446,26 @@ export nothing; fate `burned` is an error. The legacy fields `yield_BP1..3_per_c
 ### Regression
 
 No change: the regression cases have no co-products.
+
+## 61. Flax, co-product mulberry and the crops without a Master Data product (decision L76, R11, 2026-11-26)
+
+Closes the open points of L74 (section 59).
+
+- **Flax** (R11): reference product 'flax straw, dew-retted', consistent with the default yield (FAOSTAT item 771
+  'Flax; raw or retted'). Master Data 3.12: dry mass 0.9, carbon content, non-fossil 0.475 kg C/kg DM (legacy table:
+  water 0.11, so dry 0.89; carbon 0.46). Rejected: 'flax plant, harvested' (fresh plant, dry mass 0.18).
+  `md312_product_properties.csv` now has 61 products.
+- **Co-product 'mulberry'** (R11): removed from `coproduct_list.csv`; 'mulberry leaves' is the main product of the
+  crop mulberry and no crop of the tool has it as a co-product.
+- **Crops without a Master Data 3.12 product** (L76): blueberry, cassava, cranberry, ginger, guar, citruslime,
+  raspberry, turmeric. Signed `not_needed`; they keep `CARBON_CONTENT_PER_CROP` and
+  `WATER_CONTENT_FM_RATIO_PER_CROP` (legacy, undocumented, provisional), and `MainProductPropertyGenerator` warns
+  when it falls back to them. The writer cannot write their reference product (blocker in
+  `docs/java_changes_pending.md`).
+- **To report to the Master Data team** (same list as L67 (b) and L69 (c)): no reference product for the 8 crops;
+  'mandarin' has dry mass 0.11 but water in wet mass 0.457 (sum 0.567 kg, not 1 kg).
+
+Tests (`test_coproduct_carbon.py`): the 8 crops are the only ones without a product, signed `not_needed` with the
+legacy tag, and warn; flax reads the properties of 'flax straw, dew-retted'; 'mulberry' is not a co-product.
+
+Regression: no change (flax and the 8 crops are not in the cases).

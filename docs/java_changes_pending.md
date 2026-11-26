@@ -135,6 +135,11 @@ with the Master Data 3.12 properties of `data/md312_product_properties.csv`. The
 
 Gross energy (`energy_gross_calorific_value`) stays on the main product only (open point of T23).
 
+**Blocker (L76):** the 8 crops without a Master Data 3.12 product (blueberry, cassava, cranberry, ginger, guar, citruslime, raspberry, turmeric; empty `md312_product`, status
+`not_needed` in `data/crop_main_product.csv`) have no reference product that the writer can write. Their datasets
+cannot be written until the Master Data team creates the products (open point reported with L67 (b) and L69 (c)); the
+writer must stop with an error for them rather than write a free-text name.
+
 ## Other Python output changes that touch the writer
 
 - `heavymetal_to_soil_minus_uptake_*` (read by the writer) is now the full SALCA balance with the

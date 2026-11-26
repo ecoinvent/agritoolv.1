@@ -234,7 +234,7 @@ PRODUCT_PROPERTIES_TABLE = "md312_product_properties.csv"
 
 def crop_main_product(crop):
     """Master Data 3.12 reference product of a crop (``crop_main_product.csv``, decision L74), or None
-    when the crop has no Master Data product yet (status missing or decision)."""
+    when the crop has no Master Data product (the 8 crops signed not_needed, decision L76)."""
     try:
         return table(MAIN_PRODUCT_TABLE, numeric=False)[crop]["md312_product"] or None
     except KeyError:

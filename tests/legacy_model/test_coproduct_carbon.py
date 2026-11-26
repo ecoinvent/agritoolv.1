@@ -90,15 +90,34 @@ def test_gross_energy_proxy_uses_the_main_product_only():
     assert g["CO2_from_yield"] == pytest.approx(main + 1362.2370, rel=1e-6)
 
 
-def test_crop_without_master_data_product_keeps_the_legacy_tables():
+CROPS_WITHOUT_PRODUCT = ["blueberry", "cassava", "cranberry", "ginger", "guar", "citruslime", "raspberry", "turmeric"]
+
+
+def test_crop_without_master_data_product_keeps_the_legacy_tables_with_a_warning():
+    """Decision L76: the 8 crops without a Master Data 3.12 product, signed not_needed by FC."""
     rows = {r["crop"]: r for r in dataloader.rows("crop_main_product.csv")}
-    for crop, row in rows.items():
-        if row["md312_product"]:
-            continue
-        assert row["status"] in ("missing", "decision"), crop
+    assert sorted(c for c, r in rows.items() if not r["md312_product"]) == sorted(CROPS_WITHOUT_PRODUCT)
+    for crop in CROPS_WITHOUT_PRODUCT:
+        assert (rows[crop]["status"], rows[crop]["reviewed_by"]) == ("not_needed", "FC"), crop
+        assert "legacy, undocumented, provisional" in rows[crop]["note"], crop
         g = generators(crop=crop)
-        assert g["yield_main_product_dry_content"] == 1 - WATER_CONTENT_FM_RATIO_PER_CROP[crop]
-        assert g["yield_main_product_carbon_content"] == CARBON_CONTENT_PER_CROP[crop]
+        with pytest.warns(UserWarning, match="no Master Data 3.12 product"):
+            assert g["yield_main_product_dry_content"] == 1 - WATER_CONTENT_FM_RATIO_PER_CROP[crop]
+        with pytest.warns(UserWarning, match="no Master Data 3.12 product"):
+            assert g["yield_main_product_carbon_content"] == CARBON_CONTENT_PER_CROP[crop]
+
+
+def test_flax_takes_the_dew_retted_straw():
+    """FC 2026-11-26 (R11): flax -> 'flax straw, dew-retted', the FAOSTAT item 771 'Flax; raw or retted'."""
+    assert dataloader.crop_main_product("flax") == "flax straw, dew-retted"
+    properties = dataloader.product_properties("flax straw, dew-retted")
+    g = generators(crop="flax")
+    assert g["yield_main_product_dry_content"] == properties["dry_mass_kg_per_kg"]
+    assert g["yield_main_product_carbon_content"] == properties["carbon_content_non_fossil_kg_per_kg_dm"]
+
+
+def test_mulberry_is_not_a_coproduct():
+    assert "mulberry" not in {r["legacy_label"] for r in dataloader.rows("coproduct_list.csv")}
 
 
 def test_every_crop_has_a_row_and_every_named_product_has_properties():
