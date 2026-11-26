@@ -29,8 +29,19 @@ import regression_support as rs  # noqa: E402
 from models import nitratebalance as nb  # noqa: E402
 from models import ricech4model  # noqa: E402
 from modelsSequence import ModelsSequence  # noqa: E402
+from defaultGeneration import _ifa_n_per_kg_crop_median  # noqa: E402
+from defaultTables import IFA_MINERAL_FERTILISER_PER_CROP_PER_COUNTRY, MINERAL_N_RULE_WITHOUT_IFA_RATE  # noqa: E402
+from defaultTables import N_UPTAKE_PER_KG_MAIN_PRODUCT_PER_CROP  # noqa: E402
 
 SQCB_KEYS = ("m_N_nitrate_to_groundwater", "m_N_nitrate_to_surfacewater")
+INPUT_TERMS = ("mineral_n", "available_organic_n", "n_som", "crop_residue_n", "irrigation_water_n")
+LOSS_TERMS = ("nh3_n", "nox_n", "direct_n2o_n")
+MINERAL_N_SOURCES = {
+    "ifa_rate": "IFA rate of the crop in the country (level 2, L33, L34)",
+    "level1": "0.8 x default N uptake, no IFA rate (level 1, L28, L57)",
+    "ifa_crop_median": "median IFA rate per kg of yield of the crop x yield (L57)",
+    "zero": "0, no IFA rate and no rule (L55)",
+}
 TERMS = ("mineral_n", "available_organic_n", "n_som", "crop_residue_n", "irrigation_water_n", "n_uptake", "nh3_n",
          "nox_n", "direct_n2o_n", "balance")
 MOISTURE_TOLERANCE = 0.02  # kg dry mass per kg: difference reported as "differs"
@@ -93,6 +104,31 @@ def section_cases(cases):
     print("| **SQCB NO3 (kg NO3)** | %s |\n" % " | ".join(fmt(cases[c][3], 2) for c in cases))
 
 
+def mineral_n_source(crop, country):
+    """Origin of the default mineral N of a dataset (MineralNitrogenDefaultGenerator)."""
+    if IFA_MINERAL_FERTILISER_PER_CROP_PER_COUNTRY.get(crop, {}).get(country, {}).get("n") is not None:
+        return "ifa_rate"
+    if crop in N_UPTAKE_PER_KG_MAIN_PRODUCT_PER_CROP or MINERAL_N_RULE_WITHOUT_IFA_RATE.get(crop) == "n_uptake":
+        return "level1"
+    if MINERAL_N_RULE_WITHOUT_IFA_RATE.get(crop) == "ifa_crop_median" and _ifa_n_per_kg_crop_median(crop) is not None:
+        return "ifa_crop_median"
+    return "zero"
+
+
+def zero_cause(r):
+    """Why the balance nitrate of a dataset is zero."""
+    if r["balance"] < 0.0:
+        inputs = sum(r[t] for t in INPUT_TERMS)
+        if inputs < -r["n_uptake"]:
+            return "balance < 0: N inputs below the N uptake"
+        return "balance < 0: N inputs above the N uptake, negative after the gaseous losses"
+    if r["coefficient"] == 0.0 and r["drainage_rain_mm"] == 0.0:
+        return "coefficient 0 (drainage-season rain 0: no month with precipitation above PET)"
+    if r["coefficient"] == 0.0:
+        return "coefficient 0"
+    return "balance 0"
+
+
 def default_datasets():
     countries = {r["country"] for r in dataloader.rows("faostat_country_mapping.csv")} - {"GLO"}
     pairs = sorted({(r["crop"], r["country"]) for r in dataloader.rows("default_yield.csv")
@@ -106,7 +142,8 @@ def default_datasets():
             continue
         new = balance["nitrate_to_groundwater"] + balance["nitrate_to_surfacewater"]
         out.append(dict({"crop": crop, "country": country, "sqcb_no3": sqcb, "balance_no3": new,
-                         "ratio": new / sqcb if sqcb > 0 else None},
+                         "ratio": new / sqcb if sqcb > 0 else None,
+                         "mineral_n_source": mineral_n_source(crop, country)},
                         **{k: balance[k] for k in TERMS + ("drainage_rain_mm", "coefficient")}))
     return out
 
@@ -135,11 +172,51 @@ def section_defaults(rows, top):
         print("| %s | %s | %.1f | %.1f | %+.1f | %.1f | %.0f | %.3f |" % (
             r["crop"], r["country"], r["sqcb_no3"], r["balance_no3"], r["balance_no3"] - r["sqcb_no3"],
             r["balance"], r["drainage_rain_mm"], r["coefficient"]))
+    section_zero(ok)
     if errors:
         print("\nDatasets that could not be run:\n")
         for r in errors:
             print("- %s %s: %s" % (r["crop"], r["country"], r["error"]))
     print()
+
+
+def section_zero(ok):
+    """Breakdown of the datasets with zero balance nitrate: by cause, by origin of the default N and by crop."""
+    zero = [r for r in ok if r["balance_no3"] == 0.0]
+    if not zero:
+        return
+    print("\n### Datasets with zero balance nitrate (%d of %d)\n" % (len(zero), len(ok)))
+    print("All the datasets run with default N inputs (mineral N, manure, N uptake, crop residues).\n")
+    print("| cause | datasets | median N inputs | median N uptake | median gaseous losses | median balance |")
+    print("|---|---|---|---|---|---|")
+    causes = {}
+    for r in zero:
+        causes.setdefault(zero_cause(r), []).append(r)
+    for cause, rows in sorted(causes.items(), key=lambda x: -len(x[1])):
+        print("| %s | %d | %.1f | %.1f | %.1f | %.1f |" % (
+            cause, len(rows), statistics.median(sum(r[t] for t in INPUT_TERMS) for r in rows),
+            statistics.median(-r["n_uptake"] for r in rows),
+            statistics.median(-sum(r[t] for t in LOSS_TERMS) for r in rows),
+            statistics.median(r["balance"] for r in rows)))
+    print("\nOrigin of the default mineral N (all datasets):\n")
+    print("| mineral N | datasets | zero balance nitrate | share zero |")
+    print("|---|---|---|---|")
+    for key, label in MINERAL_N_SOURCES.items():
+        n = sum(1 for r in ok if r["mineral_n_source"] == key)
+        z = sum(1 for r in zero if r["mineral_n_source"] == key)
+        if n:
+            print("| %s | %d (%.0f %%) | %d | %.0f %% |" % (label, n, 100.0 * n / len(ok), z, 100.0 * z / n))
+    print("\nBy crop (crops with at least one zero dataset):\n")
+    print("| crop | datasets | zero | share zero | main origin of the mineral N |")
+    print("|---|---|---|---|---|")
+    rows = []
+    for crop in sorted({r["crop"] for r in zero}):
+        all_rows = [r for r in ok if r["crop"] == crop]
+        z = sum(1 for r in zero if r["crop"] == crop)
+        sources = [r["mineral_n_source"] for r in all_rows]
+        rows.append((crop, len(all_rows), z, max(set(sources), key=sources.count)))
+    for crop, n, z, source in sorted(rows, key=lambda x: (-x[2] / x[1], -x[2])):
+        print("| %s | %d | %d | %.0f %% | %s |" % (crop, n, z, 100.0 * z / n, source))
 
 
 def section_moisture():
@@ -189,7 +266,8 @@ def main(argv=None):
     section_defaults(rows, args.top)
     section_moisture()
     if args.csv:
-        columns = ["crop", "country", "sqcb_no3", "balance_no3", "ratio", "drainage_rain_mm", "coefficient"] \
+        columns = ["crop", "country", "sqcb_no3", "balance_no3", "ratio", "mineral_n_source", "drainage_rain_mm",
+                   "coefficient"] \
             + list(TERMS) + ["error"]
         with open(args.csv, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=columns, lineterminator="\n")

@@ -153,15 +153,16 @@ def _sequence(name, **overrides):
     return sequence, output
 
 
-# Terms of the brief (FC 2026-11-26). The gaseous losses are those of the N supply S of SQCB (Fix F3); the brief gives
-# their sum (wheat_IT 32.4306, apple_FR 8.8926 kg N), split with 14/17 for NH3: checked as a sum, each term against S.
+# Terms of the regression cases (FC 2026-11-26). The gaseous losses are those of the N supply S of SQCB (Fix F3), with
+# the atomic masses of the tool (decision of FC 2026-11-26; the first brief split them with 14/17 for NH3, same sum).
 BALANCE_TERMS = {
     "wheat_IT": {"mineral_n": 150.0, "available_organic_n": 31.5, "crop_residue_n": 63.8584, "n_som": 0.0,
-                 "irrigation_water_n": 0.0, "n_uptake": -154.8083, "balance": 58.1194},
+                 "irrigation_water_n": 0.0, "n_uptake": -154.8083, "nh3_n": -29.1858, "nox_n": -2.0308,
+                 "direct_n2o_n": -1.2140, "balance": 58.1194},
     "apple_FR": {"mineral_n": 80.0, "available_organic_n": 9.55, "crop_residue_n": 0.0, "n_som": 0.0,
-                 "irrigation_water_n": 0.0, "n_uptake": -36.1, "balance": 44.5575},
+                 "irrigation_water_n": 0.0, "n_uptake": -36.1, "nh3_n": -6.4991, "nox_n": -1.3757,
+                 "direct_n2o_n": -1.0177, "balance": 44.5575},
 }
-GASEOUS_LOSSES = {"wheat_IT": 29.2242 + 2.0300 + 1.1764, "apple_FR": 6.5077 + 1.3752 + 1.0097}
 
 
 @pytest.mark.parametrize("name", sorted(BALANCE_TERMS))
@@ -170,8 +171,6 @@ def test_balance_of_the_regression_cases(name):
     result = sequence.nModel.last_balance_nitrate
     for term, expected in BALANCE_TERMS[name].items():
         assert result[term] == pytest.approx(expected, abs=1e-4), term
-    losses = -(result["nh3_n"] + result["nox_n"] + result["direct_n2o_n"])
-    assert losses == pytest.approx(GASEOUS_LOSSES[name], abs=1e-3)
 
 
 @pytest.mark.parametrize("name", sorted(BALANCE_TERMS))
