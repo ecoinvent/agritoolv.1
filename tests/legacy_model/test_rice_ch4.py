@@ -122,7 +122,7 @@ def test_01_regression_rice_in():
     assert output["liquid_manure_pig"] > 0  # liquid manure excluded from SF_o
     assert sf_o({e.value: output[e.value] for e in SolidManureType}) == pytest.approx(1.8372398, rel=REL)
     assert output["ch4_rice_air"] == pytest.approx(128.03063, rel=REL)
-    assert output["N2o_air"] == pytest.approx(2.637089, rel=REL)  # water regime N/A: aggregated EF1FR 0.004
+    assert output["N2o_air"] == pytest.approx(2.637298, rel=REL)  # water regime N/A: aggregated EF1FR 0.004; dry yield of L74
 
 
 def test_02_italy_irrigated_without_organic_inputs():
