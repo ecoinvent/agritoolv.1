@@ -18,7 +18,7 @@ from defaultTables import CLAY_CONTENT_PER_CROP_PER_COUNTRY, SOIL_CARBON_CONTENT
     LAND_USE_CATEGORY_PER_CROP, CROP_FACTOR_PER_CROP, SOIL_ERODIBILITY_FACTOR_PER_CROP_PER_COUNTRY, \
     ENERGY_GROSS_CALORIFIC_VALUE_PER_CROP_PARTIAL, \
     SOIL_WITH_PH_UNDER_OR_7_PER_CROP_PER_COUNTRY, CARBON_CONTENT_PER_CROP, IRR_WATERUSE_RATIO_PER_COUNTRY, \
-    ANNUAL_PRECIPITATION_PER_CROP_PER_COUNTRY, EI_IRR_RATIO_TO_RIVER, EI_IRR_RATIO_TO_GROUNDWATER, EI_IRR_RATIO_TO_AIR, \
+    ANNUAL_PRECIPITATION_PER_CROP_PER_COUNTRY, DRAINAGE_SEASON_PRECIPITATION_PER_CROP_PER_COUNTRY, EI_IRR_RATIO_TO_RIVER, EI_IRR_RATIO_TO_GROUNDWATER, EI_IRR_RATIO_TO_AIR, \
     N_UPTAKE_PER_KG_MAIN_PRODUCT_PER_CROP, N_UPTAKE_OF_TREE_RESIDUES_PER_CROP, LEGUME_CROPS, \
     N_UPTAKE_PER_KG_MAIN_PRODUCT_OTHER_CROPS, PK_PER_KG_MAIN_PRODUCT_PER_CROP, \
     IFA_MINERAL_FERTILISER_PER_CROP_PER_COUNTRY, ORCHARD_LIFETIME_PER_CROP_PER_COUNTRY, \
@@ -33,6 +33,7 @@ import dataloader
 from models.hmmodel import PesticideType, METAL_COLUMNS
 from models.irrigationmodel import irrigation_efficiency
 from models.manuremodel import ManureModel
+from models import nitratebalance
 from models.otherorganicfertilisermodel import CompostType, SludgeType
 from models.pmodel import LandUseCategory
 
@@ -157,6 +158,25 @@ class AnnualPrecipitationDefaultGenerator(object):
         table = ANNUAL_PRECIPITATION_PER_CROP_PER_COUNTRY.get(generators["crop"],
                                                               ANNUAL_PRECIPITATION_PER_CROP_PER_COUNTRY["all_crops"])
         return table[generators["country"]]
+
+
+class DrainageSeasonPrecipitationDefaultGenerator(object):
+    """Drainage-season precipitation of the crop in the country, mm/yr (TerraClimate 1991-2020, months with precipitation
+    above PET, over the SPAM 2020 area of the crop, decision L77); the row "all_crops" of the country for a crop outside
+    the table; 0 if not open ground (as the annual precipitation)."""
+    def generateDefault(self, field, generators):
+        if generators["cultivation_type"] != "open_ground":
+            return 0.0
+        table = DRAINAGE_SEASON_PRECIPITATION_PER_CROP_PER_COUNTRY.get(
+            generators["crop"], DRAINAGE_SEASON_PRECIPITATION_PER_CROP_PER_COUNTRY["all_crops"])
+        return table[generators["country"]]
+
+
+class LeachingSoilSharesDefaultGenerator(object):
+    """Shares of the soil classes of the leaching coefficient (HWSD v2.0 over the SPAM 2020 area of the crop,
+    data/hwsd2_leaching_soil_shares.csv, decision L77)."""
+    def generateDefault(self, field, generators):
+        return nitratebalance.soil_shares(generators["crop"], generators["country"])
 
 
 class CropCyclePerYearDefaultGenerator(object):
@@ -804,6 +824,12 @@ DEFAULTS_VALUES_GENERATORS = {
     "rice_water_regime": SimpleValueDefaultGenerator(None),
     "rice_preseason_water_regime": SimpleValueDefaultGenerator(None),
     "rice_cultivation_period_days": SimpleValueDefaultGenerator(None),
+    # Nitrate of the nitrogen balance (decision L77): nitrate of the irrigation water, optional template field (T18),
+    # None = N/A -> no N; drainage-season rain and soil classes of the leaching coefficient
+    "irrigation_water_nitrate": SimpleValueDefaultGenerator(None),
+    "irrigation_water_nitrate_unit": SimpleValueDefaultGenerator(None),
+    "drainage_season_precipitation": DrainageSeasonPrecipitationDefaultGenerator(),
+    "leaching_soil_shares": LeachingSoilSharesDefaultGenerator(),
     # P defaults (topsoil P content, enrichment factor and delivery ratio are read by the
     # P model from data/model_parameters.csv since Fix F8)
     "land_use_category": TableLookupDefaultGenerator("crop", LAND_USE_CATEGORY_PER_CROP),

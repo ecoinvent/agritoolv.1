@@ -46,6 +46,8 @@ Review tables (all in data/):
   ipcc2019_rice_organic_amendment_mapping.csv  idem
   emep2023_pm_operation_mapping.csv       usable when status is confirmed (PM of field operations, L68)
   emep2023_pm_crop_mapping.csv            idem
+  sio2008_taula6_leaching.csv             usable when status is confirmed (nitrate of the nitrogen balance, L77)
+  hwsd2_sio2008_class_mapping.csv         idem
   elementary_flow_alignment.csv           done when status is ok, renamed, confirmed or not_needed (F9)
   intermediate_exchange_alignment.csv     idem
   crop_main_product.csv                   idem (reference product of each crop, L74)
@@ -120,6 +122,8 @@ TABLES = [
     ("ipcc2019_rice_organic_amendment_mapping.csv", ("confirmed",), ("tool_variable", "cfoa_class", "mass_basis", "status")),
     ("emep2023_pm_operation_mapping.csv", ("confirmed",), ("operation", "emep_operation", "status")),
     ("emep2023_pm_crop_mapping.csv", ("confirmed",), ("crop", "emep_crop", "status")),
+    ("sio2008_taula6_leaching.csv", ("confirmed",), ("depth_cm", "rain_mm", "texture", "status")),
+    ("hwsd2_sio2008_class_mapping.csv", ("confirmed",), ("variable", "hwsd_code", "hwsd_label", "sio2008_class", "status")),
     ("elementary_flow_alignment.csv", ("renamed", "confirmed", "not_needed"), ("legacy_name", "subcompartment", "status", "md312_name", "candidates")),
     ("intermediate_exchange_alignment.csv", ("renamed", "confirmed", "not_needed"), ("legacy_name", "status", "md312_name", "candidates")),
     ("crop_main_product.csv", ("renamed", "confirmed", "not_needed"), ("crop", "legacy_name", "status", "md312_product", "candidates")),

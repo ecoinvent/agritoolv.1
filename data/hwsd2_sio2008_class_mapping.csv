@@ -1,0 +1,25 @@
+variable,hwsd_code,hwsd_label,sio2008_class,note,status,reviewed_by
+root_depth,1,Deep (> 100cm),90,"HWSD2 lookup table D_ROOT_DEPTH; deepest row of Taula 6 (90 cm)",confirmed,FC
+root_depth,2,Moderately Deep (< 100cm),60,"HWSD2 lookup table D_ROOT_DEPTH (report: 50-100 cm)",confirmed,FC
+root_depth,3,Shallow (< 50cm),30,"HWSD2 lookup table D_ROOT_DEPTH (report: 10-50 cm)",confirmed,FC
+root_depth,4,Very shallow (< 10cm),30,"HWSD2 lookup table D_ROOT_DEPTH; shallowest row of Taula 6 (30 cm)",confirmed,FC
+texture_usda,1,Clay (heavy),clay,"Taula 6 footnote (1): argilosa",confirmed,FC
+texture_usda,2,Silty clay,clay,"Taula 6 footnote (1): argil·lollimosa",confirmed,FC
+texture_usda,3,Clay (light),clay,"Taula 6 footnote (1): argilosa",confirmed,FC
+texture_usda,4,Silty clay loam,silty,"Taula 6 footnote (2): franco-argil·lollimosa",confirmed,FC
+texture_usda,5,Clay loam,silty,"Taula 6 footnote (2): franco-argilosa",confirmed,FC
+texture_usda,6,Silt,silty,"Taula 6 footnote (2): llimosa",confirmed,FC
+texture_usda,7,Silt loam,silty,"Taula 6 footnote (2): franco-llimosa",confirmed,FC
+texture_usda,8,Sandy clay,clay,"Taula 6 footnote (1): argil·loarenosa",confirmed,FC
+texture_usda,9,Loam,loam,"Taula 6 footnote (3): franca",confirmed,FC
+texture_usda,10,Sandy clay loam,sandy,"not in the footnotes of Taula 6; decision of FC",confirmed,FC
+texture_usda,11,Sandy loam,sandy,"Taula 6 footnote (4): franco-arenosa",confirmed,FC
+texture_usda,12,Loamy sand,sandy,"Taula 6 footnote (4): arenofranca",confirmed,FC
+texture_usda,13,Sand,sandy,"Taula 6 footnote (4): arenosa",confirmed,FC
+drainage,E,Excessively drained,well,"HWSD2 lookup table D_DRAINAGE; Taula 6 is for well-drained soils",confirmed,FC
+drainage,SE,Somewhat excessively drained,well,"HWSD2 lookup table D_DRAINAGE; Taula 6 is for well-drained soils",confirmed,FC
+drainage,W,Well drained,well,"HWSD2 lookup table D_DRAINAGE; Taula 6 is for well-drained soils",confirmed,FC
+drainage,MW,Moderately well drained,well,"HWSD2 lookup table D_DRAINAGE; the HWSD v2.0 reference drainage is an estimate by soil type and topsoil texture and codes ordinary free-draining soils as moderately well drained (report Table 2.1: Vitric Andosol, Haplic Podzol, Dystric Cambisol); factor 1.00 (decision of FC 2026-11-26)",confirmed,FC
+drainage,I,Imperfectly drained,moderately_well,"HWSD2 lookup table D_DRAINAGE; group of the note of Taula 6 for moderately well drained soils (moderadament ben drenats), factor 1.10 (decision of FC 2026-11-26)",confirmed,FC
+drainage,P,Poorly drained,poorly,"HWSD2 lookup table D_DRAINAGE; note of Taula 6: mal drenats",confirmed,FC
+drainage,VP,Very poorly drained,poorly,"HWSD2 lookup table D_DRAINAGE; note of Taula 6: mal drenats",confirmed,FC

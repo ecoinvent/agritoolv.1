@@ -15,6 +15,10 @@ BASE_INPUTS = {
     "soluble_nitrogen_from_organic_fert": 0.0,
     "organic_carbon_content": 0.011, "average_annual_precipitation": 800.0, "crop_cycle_per_year": 1.0,
     "rooting_depth": 0.7, "water_use_total": 0.0, "wet_climate_share": 1.0, "rice_water_regime": None,
+    # inputs of the nitrate of the nitrogen balance (decision L77), not used by this test
+    "available_nitrogen_from_organic_fert": 0.0, "irrigated": "no", "irrigation_water_nitrate": None,
+    "irrigation_water_nitrate_unit": None, "drainage_season_precipitation": 0.0,
+    "leaching_soil_shares": {(90, "loam", "well"): 1.0},
 }
 
 

@@ -1,0 +1,4 @@
+drainage_group,factor,page,note
+well,1.00,5,"Title of Taula 6: coefficients for soils with good drainage (Sols amb bon drenatge)"
+moderately_well,1.10,5,"Note of Taula 6: moderately well drained soils, increase the coefficient by 10 %; the coefficient is never above 1"
+poorly,1.20,5,"Note of Taula 6: poorly drained soils, increase the coefficient by 20 %; the coefficient is never above 1"

@@ -126,6 +126,24 @@ class OtherOrganicFertModel(object):
         """Soluble (ammoniacal) N applied with compost and sludge [kg N/ha] (Fix F3)."""
         return self._sum_per_t(lambda fert_type: self._content(fert_type, "tan_kg_n_per_t_fm"))
 
+    def computeAvailableN(self):
+        """Plant-available N applied with compost and sewage sludge [kg N/ha] for the nitrogen balance of the nitrate
+        leaching (decision L77): kg FM / 1000 x N [kg/t FM] x n_available_share of the composition table (GRUDAF 2009
+        Table 42 for compost, COMIFER 2013 Table 8 KeqN of the cycle for sludge, vinasse and dried poultry manure).
+        A type without a share (no source) counts 0, with a warning when applied."""
+        total = 0.0
+        for quantities in (self.compost_quantities, self.sludge_quantities):
+            for fert_type, kg_fm in quantities.items():
+                share = self._content(fert_type, "n_available_share")
+                if share is None:
+                    if kg_fm > 0:
+                        warnings.warn("%s applied (%g kg/ha) has no plant-available N share in %s: its N counts 0 in "
+                                      "the nitrogen balance of the nitrate leaching (decision L77)"
+                                      % (fert_type.value, kg_fm, self._COMPOSITION_TABLE))
+                    continue
+                total += kg_fm / 1000.0 * self._content(fert_type, "n_total_kg_per_t_fm") * share
+        return total
+
     def _sum_per_t(self, value_per_t):
         """sum(kg FM / 1000 x value_per_t(type)) over compost and sludge."""
         return sum(v * value_per_t(k)

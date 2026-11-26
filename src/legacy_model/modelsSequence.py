@@ -45,7 +45,9 @@ class ModelsSequence(object):
         self.outputMapping.mapFertilizers(self.allInputs)
         self.outputMapping.mapOtherOrganicFertilizers(self.allInputs)
         self.outputMapping.mapCo2Model(Co2Model(self.allInputs).compute())
-        self.outputMapping.mapNModel(NModel(self.allInputs).compute(), self.allInputs)
+        # Decision L77: the N model also computes the nitrate of the nitrogen balance (not written); kept for reports
+        self.nModel = NModel(self.allInputs)
+        self.outputMapping.mapNModel(self.nModel.compute(), self.allInputs)
         # Decision L66: after the manure and other organic fertiliser defaults, whose amounts enter SF_o
         self.outputMapping.mapRiceCh4Model(RiceCh4Model(self.allInputs).compute())
         self.outputMapping.mapPModel(PModel(self.allInputs).compute(), self.allInputs)
@@ -74,6 +76,7 @@ class ModelsSequence(object):
         self._intermediateValues["p2o5_in_solid_manure"] = pres[1]
         self._intermediateValues["hm_from_manure"] = manureM.computeHeavyMetal();
         self._intermediateValues["ammonia_due_to_manure"] = manureM.computeNH3()
+        self._intermediateValues["available_nitrogen_from_manure"] = manureM.computeAvailableN()
         self._intermediateValues["soluble_nitrogen_from_manure"] = manureM.computeSolubleN()
 
     def _computeOtherOrganicFertiliser(self):
@@ -89,6 +92,9 @@ class ModelsSequence(object):
         self._intermediateValues["ammonia_due_to_other_orga_fert"] = otherfertM.computeNH3()
         self._intermediateValues["soluble_nitrogen_from_organic_fert"] = \
             self._intermediateValues["soluble_nitrogen_from_manure"] + otherfertM.computeSolubleN()
+        # Decision L77: plant-available organic N of the nitrogen balance of the nitrate leaching
+        self._intermediateValues["available_nitrogen_from_organic_fert"] = (
+            self._intermediateValues["available_nitrogen_from_manure"] + otherfertM.computeAvailableN())
 
     def _computeSeed(self):
         seedM = SeedModel(self.allInputs)

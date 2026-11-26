@@ -276,6 +276,11 @@ class ManureModel(object):
         """
         return self._sum_per_unit(lambda manure_type: self._content(manure_type, "tan"))
 
+    def computeAvailableN(self):
+        """Plant-available N applied with manure [kg N/ha] for the nitrogen balance of the nitrate leaching (decision
+        L77): GRUDAF 2009 Table 39 Nverf per manure type, mean of the printed range (as the default manure, L40)."""
+        return self._sum_per_unit(lambda manure_type: self._content(manure_type, "n_available"))
+
     def _sum_per_unit(self, value_per_unit):
         """sum(quantity x value_per_unit(type)): liquid m3 x dilution share, solid kg -> t."""
         liquid = sum(v * value_per_unit(k) for k, v in self.liquid_manure_quantities.items()) \
