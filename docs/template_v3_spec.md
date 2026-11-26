@@ -122,6 +122,7 @@ of template v2.
 | `organic` | yes/no | R | `organic_certified` | |
 | `crop_cycle_duration` | months | O, N | `harvest_date_previous_crop`, `harvesting_date_main_crop` | Months from the harvest of the previous crop to the harvest of this crop (Q4, decided); N/A -> 12. The tool sets `crop_cycle_per_year` = 12 / duration; the occupation period 1 / `crop_cycle_per_year` years is read by the land occupation and the nitrate, phosphorus, heavy-metal and land use change models. Replaces the four dates of v2 |
 | `yield_main_product` | kg FM/(ha and crop cycle) | E | `yield_main_product_per_crop_cycle` | N/A -> default FAOSTAT 2021-2024 per crop cycle (L23, L24), with warning. A given value is checked for plausibility (section 5.11). Crops without a default yield (guar, mulberry, pomegranate) require the value |
+| `yield_moisture` | % of fresh mass | O, N | - | Water content at which `yield_main_product` is given. N/A -> the water content of the Master Data 3.12 product of the crop (1 - dry mass, `md312_product_properties.csv`); when `grain_drying` = yes and N/A, `grain_moisture_after_drying`. The reader converts the yield to the Master Data basis: yield_MD = yield x (100 - `yield_moisture`) / 100 / dry mass of the product (T24) |
 | `irrigated` | yes/no | R, N | - | No "unknown" (Q5, section 5.12). Sets the land use flows (irrigated or non-irrigated) |
 | `irrigation_water`, `irrigation_water_unit` | m3/ha or mm, per crop cycle | R if `irrigated` = yes | `total_wateruse` | No default (section 5.12); must be 0 or N/A when `irrigated` = no |
 | `irrigation_share_surface`, `irrigation_share_sprinkler`, `irrigation_share_drip` | % of the irrigation water | R if `irrigated` = yes, N | `ratio_irr_*` (not in v2) | Sum 100 %; one technique = 100 %. No default (section 5.12) |
@@ -771,7 +772,7 @@ These fields are needed only if the corresponding model is adopted (decisions of
 ## 10. Next steps
 
 1. FC reviews this specification and answers Q1-Q10 (done 2026-11-02).
-2. Record the decisions in `docs/DECISIONS.md` (T1-T13, 2026-11-02; T14-T16 and the closing of T1, T6 and T9, 2026-11-06; T17 and T18, 2026-11-09; T19-T22, realignment with L67-L69, 2026-11-25; T23, co-products, 2026-11-26).
+2. Record the decisions in `docs/DECISIONS.md` (T1-T13, 2026-11-02; T14-T16 and the closing of T1, T6 and T9, 2026-11-06; T17 and T18, 2026-11-09; T19-T22, realignment with L67-L69, 2026-11-25; T23, co-products, and T24, moisture of the yield, 2026-11-26).
 3. Build script for the `Lists` sheet from `data/`, and the empty template v3 in `templates/`.
 4. Reader with validation and provenance, with tests on example workbooks.
 5. Adapter from the reader output to the inputs of `src/legacy_model/` (one run per dataset).
