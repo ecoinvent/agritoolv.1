@@ -3472,18 +3472,25 @@ Regression: no change (flax and the 8 crops are not in the cases).
 
 ## 62. Nitrate leaching from a nitrogen balance, compared with SQCB (decision L77, 2026-11-26)
 
-The balance nitrate is computed next to the SQCB regression and not written: SQCB stays the nitrate of the datasets
-and of the indirect N2O (EF5) until FC decides (`NModel.last_balance_nitrate`, `models/nitratebalance.py`,
-`scripts/compare_nitrate_methods.py`).
+The balance nitrate is computed next to the SQCB regression and not written (`NModel.last_balance_nitrate`,
+`models/nitratebalance.py`, `scripts/compare_nitrate_methods.py`).
+
+Decision of FC (2026-11-26): keep both. SQCB stays the written nitrate and drives EF5; the balance is a check until
+the soil mineralisation term Mh is added (COMIFER 2013 Eq. 7-10, pp. 33-35, separate branch), then the replacement is
+re-evaluated. Reason: 428 of 1475 default datasets (29 %) give zero leaching with the balance; Sio et al. (2008) start
+the balance from the N mineralised the year before (Taula 2, 50-120 kg N/ha) and add the humus mineralisation
+(Taula 7, 20-35 kg N/ha), while the balance of the tool has only the crop residue N and N_som. Rejected: replacing
+SQCB now; holding the branch until Mh is added.
 
 ### Tables
 
 - `sio2008_taula6_leaching.csv`: Taula 6 of Sio et al. (2008), p. 5, transcribed from the page image (the PDF has no
-  text layer); 56 cells (90 and 60 cm x 100-500 mm, 30 cm x 100, 200, 300 and > 400 mm, x 4 textures), two columns
+  text layer), checked cell by cell against an independent reading of the page and signed by FC; 56 cells (90 and 60 cm x 100-500 mm, 30 cm x 100, 200, 300 and > 400 mm, x 4 textures), two columns
   (previous crop irrigated in summer; rain-fed summer or winter previous crop). Check: 90 cm, 200 mm, silty gives
   1 - (0.75 + 0.85) / 2 = 0.20 (Anton 2026 Table 4 prints 0.225).
 - `sio2008_drainage_factors.csv`: note of Taula 6, 1.00 / 1.10 / 1.20, coefficient never above 1.
-- `hwsd2_sio2008_class_mapping.csv`: codes of the HWSD2 lookup tables D_ROOT_DEPTH, D_TEXTURE_USDA and D_DRAINAGE.
+- `hwsd2_sio2008_class_mapping.csv`: codes of the HWSD2 lookup tables D_ROOT_DEPTH, D_TEXTURE_USDA and D_DRAINAGE;
+  checked against the footnotes of Taula 6 and signed by FC (24 rows).
   Drainage (FC 2026-11-26): E, SE, W, MW -> 1.00; I -> 1.10; P, VP -> 1.20. The reference drainage of HWSD v2.0 is an
   estimate by soil type and topsoil texture and codes ordinary free-draining soils as moderately well drained (report
   Table 2.1: Vitric Andosol, Haplic Podzol, Dystric Cambisol all MW); the topsoil layer D1 uses no W or E class.
@@ -3514,8 +3521,8 @@ and of the indirect N2O (EF5) until FC decides (`NModel.last_balance_nitrate`, `
 | balance | 58.1194 | 44.5575 |
 | drainage-season rain of the cycle (mm) | 277 | 424 |
 | coefficient | 0.5238 | 0.7356 |
-| balance NO3 (kg NO3) | 134.75 | 145.10 |
-| SQCB NO3 (kg NO3) | 129.96 | 174.91 |
+| balance NO3 (kg NO3/ha) | 134.8 | 145.1 |
+| SQCB NO3 (kg NO3/ha) | 130.0 | 174.9 |
 
 rice_IN (flooded rice): SQCB only, 161.81 kg NO3. The gaseous losses are those of the SQCB supply S (F3) and the
 conversions use the atomic masses of `atomicmass.py` (FC 2026-11-26); the first brief split the same sum (32.4306 and
@@ -3539,7 +3546,8 @@ tea 67 %, processing tomato 63 %.
 
 WFLDB 2017 sheet 4 gives g/kg FM without a moisture (39 crops) and GRUDAF 2009 Tab. 1 none (flax, hemp); the
 extracted Ludemann table has a dry mass for 8 crops: sesame the same as the Master Data product; lentil -0.057,
-pomegranate -0.090, grape -0.039, millet -0.038; cassava and guar have no Master Data product. Chick pea: 0.86 against
+pomegranate -0.090, grape -0.039, millet -0.038 (open point of L77: moisture basis of their N contents); cassava and
+guar have no Master Data product. Chick pea: 0.86 against
 0.2114 for 'chickpea' of the Master Data 3.12, the dry mass of green peas (comment of the property): open point for
 the Master Data team (L77), no workaround.
 
