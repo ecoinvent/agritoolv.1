@@ -1,5 +1,5 @@
 import dataloader
-from models import ricech4model
+from models import nitratebalance, ricech4model
 from models.atomicmass import NH3_TO_N_FACTOR, NO2_TO_N_FACTOR, N_TO_NO3_FACTOR,\
     N_TO_N2O_FACTOR, N_TO_NO2_FACTOR
 
@@ -32,6 +32,13 @@ class NModel(object):
       rooting_depth: m
       water_use_total: m3/(ha*crop cycle)
       wet_climate_share: ratio, share of the crop area in a wet climate of IPCC 2019 (N2O factors, decision L64)
+      available_nitrogen_from_organic_fert: kg N / (ha*crop cycle), plant-available N of manure, compost and sludge
+      irrigated: "yes" / "no"
+      irrigation_water_nitrate: nitrate concentration of the irrigation water or None (N/A, template field T18)
+      irrigation_water_nitrate_unit: "mg NO3/l" or "mg NO3-N/l"
+      drainage_season_precipitation: mm/year, precipitation of the months with precipitation above PET
+      leaching_soil_shares: {(depth_cm, texture, drainage_group): share} of the soil classes of Taula 6
+      (the last six inputs: nitrate of the nitrogen balance, decision L77)
 
     Outputs:
       m_N_ammonia_total: kg NH3 / (ha*crop cycle)
@@ -66,7 +73,13 @@ class NModel(object):
                         "rooting_depth",
                         "water_use_total",
                         "wet_climate_share",
-                        "rice_water_regime"
+                        "rice_water_regime",
+                        "available_nitrogen_from_organic_fert",
+                        "irrigated",
+                        "irrigation_water_nitrate",
+                        "irrigation_water_nitrate_unit",
+                        "drainage_season_precipitation",
+                        "leaching_soil_shares"
                        ]
 
     # Direct N2O factor of flooded rice per water regime (IPCC 2019 Table 11.1, footnote 7; decision L66): EF1FR
@@ -88,6 +101,7 @@ class NModel(object):
         for key in NModel._input_variables:
             setattr(self, key, inputs[key])
         self.last_nitrogen_supply = None  # S of the last compute(), for tests and reports
+        self.last_balance_nitrate = None  # nitrate of the nitrogen balance of the last compute() (decision L77)
 
     def compute(self):
         self._check_fractions()
@@ -102,6 +116,7 @@ class NModel(object):
                                       organic_nitrogen + self.nitrogen_from_crop_residues + self._compute_n_som(),
                                       ammonia_total, nox, no3asNleach, ef1fr)
         no3gw, no3sw = self._split_n3oasNleach_between_ground_and_surface_waters(no3asNleach)
+        self.last_balance_nitrate = self._compute_balance_nitrate(ammonia_total, nox, n2o_direct_as_n)
         return {"m_N_ammonia_total": ammonia_total,
                 "m_N_nitrate_to_groundwater": no3gw,
                 "m_N_nitrate_to_surfacewater": no3sw,
@@ -194,6 +209,41 @@ class NModel(object):
         self.last_nitrogen_supply = s
         norg = self._compute_nitrogen_in_soil_orga_matter(corg)
         return self._compute_nitrogen_leaching(s, norg)
+
+    def _compute_balance_nitrate(self, ammonia_total, nox, n2o_direct_as_n):
+        """Nitrate of the nitrogen balance x leaching coefficient (decision L77), computed next to SQCB and not written:
+        SQCB stays the nitrate of the datasets and of the indirect N2O until FC decides.
+
+        balance = mineral N + available organic N + N_som + crop residue N + irrigation water N
+                  - N uptake - NH3-N - NOx-N - direct N2O-N (the losses of the N supply of SQCB, Fix F3)
+        NO3-N   = max(balance, 0) x coefficient (nitratebalance.weighted_leached_fraction) at the drainage-season
+                  rain of the crop cycle, drainage_season_precipitation x t (t = 1 / crop_cycle_per_year; the
+                  irrigation water is not counted); split between ground and surface water with drained_part.
+        Flooded crops (crop_types.csv: rice) other than upland rice (rice_water_regime "upland"): None, SQCB only.
+        Returns a dict with the terms, the coefficient and the nitrate [kg NO3] to ground and surface water.
+        """
+        if ricech4model.is_flooded(self.crop) and ricech4model.water_regime(self.rice_water_regime) != "upland":
+            return None
+        terms = {
+            "mineral_n": self.nitrogen_from_mineral_fert,
+            "available_organic_n": self.available_nitrogen_from_organic_fert,
+            "n_som": self._compute_n_som(),
+            "crop_residue_n": self.nitrogen_from_crop_residues,
+            "irrigation_water_n": nitratebalance.irrigation_water_n(
+                self.irrigation_water_nitrate, self.irrigation_water_nitrate_unit, self.water_use_total,
+                self.irrigated),
+            "n_uptake": -self.nitrogen_uptake_by_crop,
+            "nh3_n": -NH3_TO_N_FACTOR * ammonia_total,
+            "nox_n": -NO2_TO_N_FACTOR * nox,
+            "direct_n2o_n": -n2o_direct_as_n,
+        }
+        balance = sum(terms.values())
+        rain = self.drainage_season_precipitation * self._duration_years()
+        coefficient = nitratebalance.weighted_leached_fraction(self.leaching_soil_shares, rain)
+        no3_as_n = max(balance, 0.0) * coefficient
+        ground, surface = self._split_n3oasNleach_between_ground_and_surface_waters(no3_as_n)
+        return dict(terms, balance=balance, drainage_rain_mm=rain, coefficient=coefficient, no3_as_n=no3_as_n,
+                    nitrate_to_groundwater=ground, nitrate_to_surfacewater=surface)
 
     def _compute_carbon_in_soil_orga_matter(self):  # kg C/kg soil * kg soil/m3 * m3/ha -> kg C/ha
         return self.organic_carbon_content * self.bulk_density_of_soil * self.considered_soil_volume

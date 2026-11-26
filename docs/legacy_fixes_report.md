@@ -3469,3 +3469,72 @@ Tests (`test_coproduct_carbon.py`): the 8 crops are the only ones without a prod
 legacy tag, and warn; flax reads the properties of 'flax straw, dew-retted'; 'mulberry' is not a co-product.
 
 Regression: no change (flax and the 8 crops are not in the cases).
+
+## 62. Nitrate leaching from a nitrogen balance, compared with SQCB (decision L77, 2026-11-26)
+
+The balance nitrate is computed next to the SQCB regression and not written: SQCB stays the nitrate of the datasets
+and of the indirect N2O (EF5) until FC decides (`NModel.last_balance_nitrate`, `models/nitratebalance.py`,
+`scripts/compare_nitrate_methods.py`).
+
+### Tables
+
+- `sio2008_taula6_leaching.csv`: Taula 6 of Sio et al. (2008), p. 5, transcribed from the page image (the PDF has no
+  text layer); 56 cells (90 and 60 cm x 100-500 mm, 30 cm x 100, 200, 300 and > 400 mm, x 4 textures), two columns
+  (previous crop irrigated in summer; rain-fed summer or winter previous crop). Check: 90 cm, 200 mm, silty gives
+  1 - (0.75 + 0.85) / 2 = 0.20 (Anton 2026 Table 4 prints 0.225).
+- `sio2008_drainage_factors.csv`: note of Taula 6, 1.00 / 1.10 / 1.20, coefficient never above 1.
+- `hwsd2_sio2008_class_mapping.csv`: codes of the HWSD2 lookup tables D_ROOT_DEPTH, D_TEXTURE_USDA and D_DRAINAGE.
+- `hwsd2_leaching_soil_shares.csv` (`build_hwsd_leaching_soil.py`): 2652 rows, coverage >= 0.978, shares sum to 1.
+  The topsoil layer D1 of HWSD2_LAYERS uses only the drainage classes SE, MW, I, P and VP (no W and no E): over the
+  cropland of all SPAM crops the drainage groups are well 2.5 %, moderately well 74 %, poorly 23.5 %, so the factors
+  1.10 and 1.20 apply to almost all soils.
+- `terraclimate1991_2020_climate.csv`: new column `drainage_season_precipitation_mm`; the other columns are unchanged
+  by the rebuild (0 changed cells). wheat IT 350, apple FR 424, rice IN 1130 mm/yr.
+- `organic_fertiliser_composition.csv`: `n_available_share` and `n_available_source`. The sewage sludge rows of COMIFER
+  Table 8 are on p. 46 (caption on p. 47): boues activees liquides urbaines (C/N 4.9) 0.45, boues digerees anaerobies
+  deshydratees (C/N 5.9) 0.40, boues activees sechees (C/N 6.0) 0.35; p. 47: fientes de volailles, incorporation
+  immediate 0.65, vinasse de betterave concentree 0.50 (spring maize, KeqN of the cycle).
+
+### Regression cases
+
+| term (kg N per crop cycle) | wheat_IT | apple_FR |
+|---|---|---|
+| mineral N | 150.0000 | 80.0000 |
+| available organic N | 31.5000 | 9.5500 |
+| crop residue N | 63.8584 | 0.0000 |
+| N uptake | -154.8083 | -36.1000 |
+| NH3-N | -29.1858 | -6.4991 |
+| NOx-N | -2.0308 | -1.3757 |
+| direct N2O-N | -1.2140 | -1.0177 |
+| balance | 58.1194 | 44.5575 |
+| drainage-season rain of the cycle (mm) | 277 | 424 |
+| coefficient | 0.4862 | 0.7151 |
+| balance NO3 (kg NO3) | 125.09 | 141.06 |
+| SQCB NO3 (kg NO3) | 129.96 | 174.91 |
+
+rice_IN (flooded rice): SQCB only, 161.81 kg NO3. The brief gave the same balances and the same sum of the gaseous
+losses (32.4306 and 8.8926 kg N) with another split (NH3-N with 14/17): the model subtracts the losses of the SQCB
+supply S (F3). The conversions NO3 <-> N use the atomic masses of the tool (62.0049 / 14.0067, 0.04 % from 62/14).
+
+### Default datasets (crop x country of `default_yield.csv`, without GLO and flooded rice, all inputs default)
+
+1475 datasets, no error. Balance NO3 / SQCB NO3: median 0.19, quartiles 0.00-0.53, range 0-3.0. Zero leaching:
+balance 428 datasets (29 %, 427 with a negative balance), SQCB 15 (1 %). Median kg NO3/ha: balance 46.1, SQCB 218.5.
+Largest differences: potato CR (SQCB 2733, balance 253), strawberry FI (1676, 69), blueberry FI, potato FI, ID, CL, CA.
+
+### Moisture of the N contents of the default N uptake (report only)
+
+WFLDB 2017 sheet 4 gives g/kg FM without a moisture (39 crops) and GRUDAF 2009 Tab. 1 none (flax, hemp); the
+extracted Ludemann table has a dry mass for 8 crops: sesame the same as the Master Data product; chick pea 0.86
+against 0.211 ('chickpea' in the Master Data 3.12: to check with the Master Data team), lentil -0.057, pomegranate
+-0.090, grape -0.039, millet -0.038; cassava and guar have no Master Data product.
+
+### Tests (`tests/legacy_model/test_nitrate_balance.py`)
+
+Leached fraction (60 cm loam 250 mm 0.6125; 90 cm sandy 50 mm 0.025; 30 cm clay 700 mm 1.0; 90 cm clay 100 mm 0;
+90 cm silty 200 mm 0.20; 30 cm loam 350 mm 0.975), drainage (0.505, 0.46, cap: 0.02), weighted 0.325, drainage-season
+rain 570 mm and 285 mm per cycle, available organic N (24.83, 1.05, 13.5, feather meal 0 with a warning), irrigation N
+(22.58, 20.0, Taula 9: 14.0, not irrigated 0), the balances of wheat_IT and apple_FR, 128.69 kg NO3 with coefficient
+0.5, negative balance, flooded and upland rice.
+
+Regression: no change (the balance nitrate is not written).

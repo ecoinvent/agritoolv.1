@@ -99,8 +99,20 @@ The **Use** column below means:
 | `ipcc2019_faostat_item_awms_mapping.csv` | AgriToolV.1 | model | FAOSTAT livestock items -> IPCC animal categories. |
 | `ipcc2019_country_region.csv` | FAOSTAT GLE areas; UNSD M49. Built by `build_faostat_manure_ipcc_region.py`. | model | IPCC region of every FAOSTAT area. |
 | `ipcc2019_m49_region_mapping.csv` | AgriToolV.1 (UNSD M49 sub-regions) | build | M49 sub-regions and exceptions -> IPCC regions. |
-| `organic_fertiliser_composition.csv` | GRUDAF 2009 Table 42 (compost); Agribalyse 3.1 Tables 59 and 142 (sludge, feather meal, poultry droppings, vinasse); some legacy values | model | N, TAN and P2O5 of compost, sewage sludge and other organic fertilisers, and their EMEP source category (L15, L20, L21); P2O5 enters the P model, sludge as slurry and compost types as solid manure (L73). |
+| `organic_fertiliser_composition.csv` | GRUDAF 2009 Table 42 (compost); Agribalyse 3.1 Tables 59 and 142 (sludge, feather meal, poultry droppings, vinasse); COMIFER 2013 Table 8 (plant-available N); some legacy values | model | N, TAN and P2O5 of compost, sewage sludge and other organic fertilisers, and their EMEP source category (L15, L20, L21); P2O5 enters the P model, sludge as slurry and compost types as solid manure (L73). Plant-available N share of the nitrogen balance of the nitrate (L77). |
 | `emep2023_3d_table3_1.csv` | EMEP/EEA Guidebook 2023, 3.D Table 3-1 | model | NH3 factors of sewage sludge and other organic wastes (L15). |
+
+## Nitrate of the nitrogen balance
+
+Nitrate leaching = N balance x leaching coefficient, computed next to SQCB and not written (L77;
+`models/nitratebalance.py`, `scripts/compare_nitrate_methods.py`).
+
+| File | Source | Use | How it is used |
+|---|---|---|---|
+| `sio2008_taula6_leaching.csv` | Sio et al. (2008) Taula 6, p. 5 (signed by FC) | model | Fraction of the residual N retained from 1 October to 1 March by soil depth, rain and texture, for the two previous-crop columns; leached fraction = 1 - mean of the columns (L77). |
+| `sio2008_drainage_factors.csv` | Sio et al. (2008), note of Taula 6 | model | Factor on the retained fraction per drainage group (1.00, 1.10, 1.20), never above 1 (L77). |
+| `hwsd2_sio2008_class_mapping.csv` | AgriToolV.1 (signed by FC): HWSD v2.0 lookup tables -> Taula 6 classes | build | Rootable depth -> 90, 60 or 30 cm, USDA texture of D1 -> clay, silty, loam, sandy, drainage class -> drainage group (L77). |
+| `hwsd2_leaching_soil_shares.csv` | HWSD v2.0 (FAO & IIASA 2023) over the SPAM 2020 V2r2 crop area. Built by `build_hwsd_leaching_soil.py`. Licence CC BY-NC-SA 3.0 IGO. | model | Shares of the 36 soil classes (depth x texture x drainage group) per crop and country: weights of the leaching coefficient (L77). |
 
 ## Phosphorus and soil
 
@@ -130,7 +142,7 @@ by `scripts/netcdf_classic.py`).
 | `spam2020_crop_mapping.csv` | AgriToolV.1 (signed by FC), from mapspamc | build | Tool crop -> SPAM 2020 crop: weights of the crop x country maps (L60). |
 | `mapspamc_faostat_spam_crops.csv` | mapspamc R package, faostat2crop | reference | FAOSTAT item -> SPAM crop, reference of `spam2020_crop_mapping.csv`. |
 | `spam2020_crops.csv` | SPAM 2020 V2r2 README | reference | The 46 SPAM crops. |
-| `terraclimate1991_2020_climate.csv` | TerraClimate 1991-2020 over the SPAM 2020 V2r2 crop area. Built by `build_terraclimate_climate.py`. | model | Default annual precipitation per crop and country (L61); PET and the precipitation/PET ratio not read yet. |
+| `terraclimate1991_2020_climate.csv` | TerraClimate 1991-2020 over the SPAM 2020 V2r2 crop area. Built by `build_terraclimate_climate.py`. | model | Default annual precipitation per crop and country (L61); drainage-season precipitation (months with precipitation above PET), rain of the leaching coefficient of the nitrogen balance (L77); PET and the precipitation/PET ratio not read. |
 | `hwsd2_soil.csv` | HWSD v2.0 (FAO & IIASA 2023) over the SPAM 2020 V2r2 crop area. Built by `build_hwsd_soil.py`. Licence CC BY-NC-SA 3.0 IGO. | model | Default clay, organic carbon 0-50 cm, share of soils with pH <= 7 and erodibility K (LANCA) per crop and country (L63); silt, sand, coarse fragments, pH and K of Renard not read. |
 | `lanca2016_permeability_classes.csv` | LANCA v2.0 (Bos et al. 2016), Table 4 (signed by FC) | build | USDA texture class of HWSD -> permeability class of the K equation (L63). |
 | `lanca2016_stoniness_factors.csv` | LANCA v2.0 (Bos et al. 2016), Table 5 | build | Stoniness factor per class of coarse fragments (L63). |

@@ -377,6 +377,11 @@ RAINFALL_EROSIVITY_PER_CROP_PER_COUNTRY = dataloader.crop_country_table("gloreda
 # (scripts/build_terraclimate_climate.py)
 ANNUAL_PRECIPITATION_PER_CROP_PER_COUNTRY = dataloader.crop_country_table("terraclimate1991_2020_climate.csv",
                                                                           "annual_precipitation_mm")
+# Drainage-season precipitation, mm/yr, per crop and country, with the row "all_crops" per country (decision L77): sum of
+# the monthly TerraClimate 1991-2020 precipitation of the months with precipitation above PET, aggregated as the annual
+# precipitation (scripts/build_terraclimate_climate.py); rain of the nitrate leaching coefficient of Sio et al. (2008)
+DRAINAGE_SEASON_PRECIPITATION_PER_CROP_PER_COUNTRY = dataloader.crop_country_table(
+    "terraclimate1991_2020_climate.csv", "drainage_season_precipitation_mm")
 # Support-practice factor P of the EU, per crop and country, with the row "all_crops" per country (decision L62):
 # Panagos et al. (2015b) map (contouring, stone walls, grass margins), mean over the SPAM 2020 V2r2 physical area of the
 # crop (scripts/build_panagos_p_factor.py); EU countries only
