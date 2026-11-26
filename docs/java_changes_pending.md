@@ -115,6 +115,26 @@ unit (MJ) are unchanged. One name changes: `plantprotection_flaming` must be wri
 'heat production, propane, at industrial furnace >100kW', instead of `heat, central or small-scale, natural gas` (row
 of `data/intermediate_exchange_alignment.csv` signed by FC on 2026-11-18).
 
+## L74 - co-products, carbon and allocation (template v3 T23)
+
+The model computes `CO2_from_yield` (`Carbon dioxide, in air`) as the carbon of the main product plus the carbon of
+the `removed` co-products of the input `coproducts` ([{"product", "amount" (kg FM per ha and crop cycle), "fate"}]),
+with the Master Data 3.12 properties of `data/md312_product_properties.csv`. The writer must:
+
+- write the main product with the Master Data product of `data/crop_main_product.csv` (column `md312_product`;
+  replaces `ecospold_main_output_mapping.properties`) and its Master Data properties, adding none of its own;
+- write each `removed` co-product by its Master Data by-product classification (column
+  `by_product_classification` of `data/md312_product_properties.csv`):
+  - `allocatable product` (e.g. straw): functional flow, economic allocation with the Master Data price
+    (`price_eur2005_per_unit`);
+  - `Recyclable` (e.g. coconut husk): non-functional output (no burden under the cut-off model);
+  - `Waste` (e.g. biowaste, waste wood, untreated): waste output;
+- write no exchange for a co-product `left on field`;
+- stop with an error for fate `burned` (the model already does);
+- no longer write the legacy `yield_BP1..3_per_crop_cycle` outputs as products named by the label text.
+
+Gross energy (`energy_gross_calorific_value`) stays on the main product only (open point of T23).
+
 ## Other Python output changes that touch the writer
 
 - `heavymetal_to_soil_minus_uptake_*` (read by the writer) is now the full SALCA balance with the

@@ -366,7 +366,7 @@ Seven metals: Cd, Cu, Zn, Pb, Ni, Cr, Hg.
 | B3 | Rice had no land occupation or transformation | F7 |
 | B4 | Unspecified pesticides: product input but no emission | Open |
 | B5 | P from compost and from dehydrated or dried sludge ignored | L73 (SALCA-P run-off: all sludge as slurry, compost types as solid manure; leaching unchanged) |
-| B6 | By-products: no carbon uptake and no allocation properties | Open |
+| B6 | By-products: no carbon uptake and no allocation properties | L74 (model: CO2 uptake of the main product and of the removed co-products from the Master Data 3.12 properties); writing by classification and allocation: ecoSpold/v4 writer (`java_changes_pending.md`) |
 | B7 | No pesticide fate (100 % to soil); no emissions to air or water | Open (method choice) |
 | B8 | No PM10 / PM2.5 from soil and crop dust of field operations | L68 (EMEP/EEA 2023 3.D Tier 2, `pm2_5_field_operations_air`, `pm2_5_to_10_field_operations_air`) |
 

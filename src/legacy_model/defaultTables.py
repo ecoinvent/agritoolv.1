@@ -265,6 +265,9 @@ def _ifa_mineral_fertiliser():
 # {crop: {country: {..}}}
 IFA_MINERAL_FERTILISER_PER_CROP_PER_COUNTRY = _ifa_mineral_fertiliser()
 
+# Decision L74: read only for the crops without a Master Data 3.12 product in data/crop_main_product.csv (status
+# missing or decision); the other crops take the carbon content, non-fossil of their product (legacy, undocumented,
+# provisional for the crops that still read it).
 #Generated from GD_crop GrossEnergy_C_L1 column D, kgC/kgDM
 # Mireille&Raphaël for Bell pepper, cabbage, cashew, cassava, chilli, cotton, eggplant, flax, grape, guar, hemp, lentil, mango, mulberry
 # Castor bean: http://www.modernscientificpress.com/Journals/ViewArticle.aspx?gkN1Z6Pb60HNQPymfPQlZIiDnrBBtQSfoCsKufNADqZ4TrWuS7h5KvbfIK0SLlFq
@@ -1088,6 +1091,9 @@ ROOTING_DEPTH_PER_CROP = {
     "wheat": 0.7
 }
 
+# Decision L74: read only for the crops without a Master Data 3.12 product in data/crop_main_product.csv (status
+# missing or decision); the other crops take the dry mass of their product (legacy, undocumented,
+# provisional for the crops that still read it).
 #From GD_crop WaterNutrient_L1 column C
 #  Mireille&Raphaël for Bell pepper, cabbage, cashew, cassava, chilli, cotton, eggplant, flax, grape, guar, hemp, lentil, mango, mulberry
 # Castor bean:pdf  Castor_Bean_Moisture in documentation file;http://www.cropj.com/gharibzahedi_5_1_2011_1_7.pdf

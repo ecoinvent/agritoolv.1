@@ -26,6 +26,23 @@ For every row not yet signed in reviewed_by the script recomputes:
 Signed rows (reviewer set status confirmed / not_needed and reviewed_by) are kept; only their
 UUID and unit are refreshed, and names that do not exist in the Master Data are reported.
 
+Two more review tables hold the products whose Master Data properties the model reads
+(decision L74, template v3 T23):
+
+  crop_main_product.csv   reference product of each crop (legacy names from the legacy
+                          ecospold_main_output_mapping.properties)
+  coproduct_list.csv      co-products offered in the template (legacy labels of yield_BP1..3)
+
+Their unsigned rows get status, md312_product, md312_uuid, candidates and note in the same way
+(rules MAIN_PRODUCT_* and COPRODUCT_* below). From the products named in both tables the script
+then writes the generated table
+
+  md312_product_properties.csv   dry mass, water in wet mass, carbon content (non-fossil), price
+                                 (sheet 'IntermediateExchanges prop.') and by-product
+                                 classification (sheet 'IntermediateExchanges')
+
+which the model reads through dataloader (the Master Data is not in the repository, O4).
+
 Usage (repository root):  .venv\\Scripts\\python scripts\\check_master_data.py
 """
 import csv
@@ -41,6 +58,9 @@ import config  # noqa: E402
 DATA = ROOT / "data"
 ELEMENTARY_FILE = DATA / "elementary_flow_alignment.csv"
 INTERMEDIATE_FILE = DATA / "intermediate_exchange_alignment.csv"
+MAIN_PRODUCT_FILE = DATA / "crop_main_product.csv"
+COPRODUCT_FILE = DATA / "coproduct_list.csv"
+PROPERTIES_FILE = DATA / "md312_product_properties.csv"
 
 # Legacy names (ecoinvent 3.4 era) -> Master Data 3.12 name of the same flow. Master Data 3.12
 # has only the ionic forms of these metals in water and agricultural soil.
@@ -110,6 +130,45 @@ VARIABLE_PROPOSAL_RULES = {
 
 REVIEW_STATUSES = ("confirmed", "not_needed")
 
+# Reference product of a crop (crop_main_product.csv, decision L74), keyed by the legacy name of
+# ecospold_main_output_mapping.properties.
+MAIN_PRODUCT_RENAME_RULES = {
+    "cabbage red": "red cabbage", "cabbage white": "white cabbage",
+}
+MAIN_PRODUCT_PROPOSAL_RULES = {
+    "rice": ("rice, non-basmati", "the default yield is FAOSTAT 'Rice' (paddy); 'rice, basmati' has the same "
+                                  "Master Data 3.12 dry mass, carbon content and price"),
+    "cotton seed": ("seed-cotton", "the default yield is FAOSTAT 'Seed cotton; unginned'; 'cottonseed' is the "
+                                   "seed separated at ginning"),
+    "hemp": ("hemp stem, dew-retted", "the default yield is FAOSTAT 'True hemp; raw or retted'; the only hemp "
+                                      "stem product of the Master Data"),
+    "mulberry": ("mulberry leaves", "mulberry is grown for its leaves (sericulture); no other mulberry product"),
+}
+MAIN_PRODUCT_DECISION_RULES = {
+    "flax": (["flax straw, dew-retted", "flax plant, harvested"],
+             "the default yield is FAOSTAT 'Flax; raw or retted'"),
+}
+
+# Co-products offered in the template (coproduct_list.csv), keyed by the legacy label of yield_BP1..3.
+COPRODUCT_RENAME_RULES = {
+    "waste wood untreated": "waste wood, untreated",
+}
+COPRODUCT_PROPOSAL_RULES = {
+    "flax seeds": ("linseed", "seed of flax, the Master Data product of the linseed crop"),
+}
+COPRODUCT_DECISION_RULES = {
+    "mulberry": (["mulberry leaves"], "no mulberry fruit in the Master Data; 'mulberry leaves' is the main "
+                                      "product of the mulberry crop"),
+}
+
+# Master Data properties copied to md312_product_properties.csv: column -> (sheet property, unit)
+PRODUCT_PROPERTIES = {
+    "dry_mass_kg_per_kg": ("dry mass", "kg"),
+    "water_in_wet_mass_kg_per_kg": ("water in wet mass", "kg"),
+    "carbon_content_non_fossil_kg_per_kg_dm": ("carbon content, non-fossil", "dimensionless"),
+    "price_eur2005_per_unit": ("price", "EUR2005"),
+}
+
 
 def read_sheet(workbook, name):
     it = workbook[name].iter_rows(values_only=True)
@@ -122,22 +181,108 @@ def read_table(path):
         return [r for r in csv.DictReader(f) if any((v or "").strip() for v in r.values())]
 
 
-def propose(legacy_name, lookup, pool):
+def propose(legacy_name, lookup, pool, rename=RENAME_RULES, proposal=PROPOSAL_RULES, decision=DECISION_RULES,
+            cutoff=0.6):
     """(status, md312_name, candidates, note) for a legacy name. ``lookup(name)`` -> MD row."""
     if lookup(legacy_name):
         return "ok", legacy_name, "", ""
-    if legacy_name in RENAME_RULES and lookup(RENAME_RULES[legacy_name]):
-        return "renamed", RENAME_RULES[legacy_name], "", "Master Data 3.12 name of the same flow"
+    if legacy_name in rename and lookup(rename[legacy_name]):
+        return "renamed", rename[legacy_name], "", "Master Data 3.12 name of the same flow"
     case_match = [n for n in pool if n.lower() == legacy_name.lower()]
     if case_match:
         return "renamed", case_match[0], "", "capitalisation only"
-    if legacy_name in PROPOSAL_RULES and lookup(PROPOSAL_RULES[legacy_name][0]):
-        name, reason = PROPOSAL_RULES[legacy_name]
+    if legacy_name in proposal and lookup(proposal[legacy_name][0]):
+        name, reason = proposal[legacy_name]
         return "proposed", name, "", reason
-    if legacy_name in DECISION_RULES:
-        options, reason = DECISION_RULES[legacy_name]
+    if legacy_name in decision:
+        options, reason = decision[legacy_name]
         return "decision", "", " | ".join(o for o in options if lookup(o)), reason
-    return "missing", "", " | ".join(difflib.get_close_matches(legacy_name, pool, n=4, cutoff=0.6)), ""
+    return "missing", "", " | ".join(difflib.get_close_matches(legacy_name, pool, n=4, cutoff=cutoff)), ""
+
+
+def write_table(path, rows, fieldnames=None):
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames or list(rows[0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def update_product_table(path, legacy_column, intermediate, rules):
+    """Align a product table (crop_main_product.csv, coproduct_list.csv) like update_table; return problems.
+
+    Unsigned rows get status, md312_product, candidates and note from ``rules`` (rename, proposal,
+    decision); signed rows (status confirmed / not_needed and reviewed_by) are kept. The UUID is refreshed.
+    """
+    rows = read_table(path)
+    pool = sorted(intermediate)
+    problems = []
+    for row in rows:
+        if row["reviewed_by"].strip():
+            if row["status"] not in REVIEW_STATUSES:
+                problems.append("%s: signed row with status '%s' (use confirmed or not_needed)"
+                                % (row[legacy_column], row["status"]))
+            if row["status"] == "confirmed" and row["md312_product"] not in intermediate:
+                problems.append("%s: md312_product '%s' not in the Master Data" % (row[legacy_column], row["md312_product"]))
+        else:
+            rename, proposal, decision = rules
+            status, name, candidates, note = propose(row[legacy_column], intermediate.get, pool, rename, proposal,
+                                                     decision, cutoff=0.75)
+            row.update(status=status, md312_product=name, candidates=candidates, note=note)
+        md = intermediate.get(row["md312_product"])
+        row["md312_uuid"] = md["id"] if md else ""
+        if md and md["unitName"] != "kg":
+            problems.append("%s: '%s' is in %s, the model needs kg" % (row[legacy_column], row["md312_product"], md["unitName"]))
+    write_table(path, rows)
+    counts = {}
+    for r in rows:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    print("%s: %d rows %s" % (path.relative_to(ROOT), len(rows), counts))
+    for p in problems:
+        print("  PROBLEM:", p)
+    return problems
+
+
+def write_product_properties(intermediate, properties):
+    """Write md312_product_properties.csv for the products of crop_main_product.csv and coproduct_list.csv.
+
+    One row per product: UUID, unit, by-product classification and the PRODUCT_PROPERTIES amounts. No
+    judgement: the values are copied from the Master Data; a note flags a product whose dry mass and
+    water in wet mass do not add up to its wet mass of 1 kg (the model reads the dry mass).
+    """
+    names = sorted({r["md312_product"] for path in (MAIN_PRODUCT_FILE, COPRODUCT_FILE)
+                    for r in read_table(path) if r["md312_product"]})
+    rows, problems = [], []
+    for name in names:
+        md = intermediate[name]
+        row = {"md312_product": name, "md312_uuid": md["id"], "unit": md["unitName"],
+               "by_product_classification": md["By-product classification"]}
+        for column, (prop, unit) in PRODUCT_PROPERTIES.items():
+            values = properties.get((name, prop), [])
+            if len(values) != 1:
+                problems.append("%s: %d values of '%s'" % (name, len(values), prop))
+                row[column] = ""
+                continue
+            amount, prop_unit = values[0]
+            if prop_unit != unit:
+                problems.append("%s: '%s' in %s, expected %s" % (name, prop, prop_unit, unit))
+            row[column] = repr(float(amount))
+        note = ""
+        if row["dry_mass_kg_per_kg"] and row["water_in_wet_mass_kg_per_kg"]:
+            total = float(row["dry_mass_kg_per_kg"]) + float(row["water_in_wet_mass_kg_per_kg"])
+            if abs(total - 1.0) > 1e-6:
+                note = "dry mass + water in wet mass = %.4g kg, not 1 kg (Master Data 3.12)" % total
+        row["note"] = note
+        rows.append(row)
+    write_table(PROPERTIES_FILE, rows, ["md312_product", "md312_uuid", "unit", "by_product_classification"]
+                + list(PRODUCT_PROPERTIES) + ["note"])
+    print("%s: %d products, %d with a note" % (PROPERTIES_FILE.relative_to(ROOT), len(rows),
+                                               sum(1 for r in rows if r["note"])))
+    for r in rows:
+        if r["note"]:
+            print("  NOTE: %s: %s" % (r["md312_product"], r["note"]))
+    for p in problems:
+        print("  PROBLEM:", p)
+    return problems
 
 
 def update_table(path, lookup, pool_for):
@@ -194,6 +339,16 @@ def main():
         lambda row, name: elementary.get((name, row["compartment"], row["subcompartment"])),
         lambda row: pools.get((row["compartment"], row["subcompartment"]), []))
     problems += update_table(INTERMEDIATE_FILE, lambda row, name: intermediate.get(name), lambda row: all_products)
+
+    problems += update_product_table(MAIN_PRODUCT_FILE, "legacy_name", intermediate,
+                                     (MAIN_PRODUCT_RENAME_RULES, MAIN_PRODUCT_PROPOSAL_RULES, MAIN_PRODUCT_DECISION_RULES))
+    problems += update_product_table(COPRODUCT_FILE, "legacy_label", intermediate,
+                                     (COPRODUCT_RENAME_RULES, COPRODUCT_PROPOSAL_RULES, COPRODUCT_DECISION_RULES))
+    properties = {}
+    for r in read_sheet(wb, "IntermediateExchanges prop."):
+        if r["name"] and r["amount"] is not None:
+            properties.setdefault((r["name"], r["propertyName"]), []).append((r["amount"], r["unitName"]))
+    problems += write_product_properties(intermediate, properties)
     return 1 if problems else 0
 
 

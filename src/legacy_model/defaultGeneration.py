@@ -254,9 +254,22 @@ class KnownSlopePctGenerator(object):
         return None
 
 
-class DryContentGenerator(object):
+class MainProductPropertyGenerator(object):
+    """A Master Data 3.12 property of the reference product of the crop (decision L74): the product of
+    data/crop_main_product.csv, its property from data/md312_product_properties.csv.
+
+    Crops without a Master Data product yet (status missing or decision in crop_main_product.csv) keep
+    the legacy table: ``fallback(crop)`` (legacy, undocumented, provisional).
+    """
+    def __init__(self, column, fallback):
+        self._column = column
+        self._fallback = fallback
+
     def generateDefault(self, field, generators):
-        return 1 - generators["yield_main_product_water_content"]
+        product = dataloader.crop_main_product(generators["crop"])
+        if product is None:
+            return self._fallback(generators["crop"])
+        return dataloader.product_properties(product)[self._column]
 
 
 class DryYieldGenerator(object):
@@ -264,19 +277,53 @@ class DryYieldGenerator(object):
         return generators["yield_main_product_dry_content"] * generators["yield_main_product_per_crop_cycle"]
 
 
-class CO2FromYieldGenerator(object):
+COPRODUCT_FATES = ("removed", "left on field")
+
+
+def coproduct_carbon_dioxide(coproduct):
+    """kg CO2 of the biogenic carbon of one co-product per ha and crop cycle (decision L74, template v3 T23).
+
+    ``coproduct``: {"product": Master Data 3.12 product (data/coproduct_list.csv), "amount": kg fresh mass per
+    ha and crop cycle, "fate": "removed" or "left on field"}. A removed co-product carries its carbon out of the
+    field: fresh mass x dry mass x carbon content, non-fossil (Master Data 3.12 properties) x 44/12. A co-product
+    left on field counts 0: its carbon returns to air and soil. Fate "burned" is not supported (template v3 T11).
+    """
+    fate = coproduct["fate"]
+    if fate not in COPRODUCT_FATES:
+        raise ValueError("Co-product '%s': fate '%s' not supported (use one of %s)"
+                         % (coproduct["product"], fate, ", ".join(COPRODUCT_FATES)))
+    properties = dataloader.product_properties(coproduct["product"])
+    if fate != "removed":
+        return 0.0
+    return float(coproduct["amount"]) * properties["dry_mass_kg_per_kg"] \
+        * properties["carbon_content_non_fossil_kg_per_kg_dm"] * MA_CO2 / MA_C
+
+
+class CO2FromMainProductGenerator(object):
+    """kg CO2 of the biogenic carbon of the main product per ha and crop cycle: dry yield x carbon content x 44/12."""
     def generateDefault(self, field, generators):
         return generators["yield_main_product_carbon_content"] * MA_CO2 / MA_C * generators[
             "yield_main_product_dry_per_crop_cycle"]
 
 
+class CO2FromYieldGenerator(object):
+    """CO2 uptake (Carbon dioxide, in air) = carbon of the main product + carbon of the removed co-products of the
+    input ``coproducts`` (decision L74). The legacy fields yield_BP1..3_per_crop_cycle (free-text names, no Master
+    Data product) give no carbon."""
+    def generateDefault(self, field, generators):
+        return generators["CO2_from_main_product"] + sum(
+            coproduct_carbon_dioxide(coproduct) for coproduct in generators["coproducts"])
+
+
 class EnergyGrossCalorificValueGenerator(object):
+    """Gross energy of the main product only (template v3 T23 (4)): GCV table x dry yield, else the legacy proxy
+    11.5 x CO2 of the main product (not of the co-products)."""
     def generateDefault(self, field, generators):
         if (generators["crop"] in ENERGY_GROSS_CALORIFIC_VALUE_PER_CROP_PARTIAL):
             return ENERGY_GROSS_CALORIFIC_VALUE_PER_CROP_PARTIAL[generators["crop"]] * generators[
                 "yield_main_product_dry_per_crop_cycle"]
         else:
-            return generators["CO2_from_yield"] * 11.5
+            return generators["CO2_from_main_product"] * 11.5
 
 
 class EolPlasticDisposalGenerator(object):
@@ -744,9 +791,14 @@ DEFAULTS_VALUES_GENERATORS = {
     # Pesticides rules
     "specified_pesticides": SimpleValueDefaultGenerator({}),
     # Direct outputs
-    "yield_main_product_water_content": TableLookupDefaultGenerator("crop", WATER_CONTENT_FM_RATIO_PER_CROP),
-    "yield_main_product_dry_content": DryContentGenerator(),
-    "yield_main_product_carbon_content": TableLookupDefaultGenerator("crop", CARBON_CONTENT_PER_CROP),
+    # Decision L74: dry mass and carbon content of the Master Data 3.12 product of the crop
+    "yield_main_product_dry_content": MainProductPropertyGenerator(
+        "dry_mass_kg_per_kg", lambda crop: 1 - WATER_CONTENT_FM_RATIO_PER_CROP[crop]),
+    "yield_main_product_carbon_content": MainProductPropertyGenerator(
+        "carbon_content_non_fossil_kg_per_kg_dm", lambda crop: CARBON_CONTENT_PER_CROP[crop]),
+    # Co-products of template v3 (T23): [{"product", "amount" (kg FM per ha and crop cycle), "fate"}]
+    "coproducts": SimpleValueDefaultGenerator([]),
+    "CO2_from_main_product": CO2FromMainProductGenerator(),
     "CO2_from_yield": CO2FromYieldGenerator(),
     "energy_gross_calorific_value": EnergyGrossCalorificValueGenerator(),
     "total_plantprotection": SimpleValueDefaultGenerator(0.0),

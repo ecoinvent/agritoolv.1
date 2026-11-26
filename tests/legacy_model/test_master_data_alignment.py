@@ -47,3 +47,15 @@ def test_every_fertiliser_product_has_a_nutrient_content():
     assert contents["fert_k_potassium_salt"] == pytest.approx(0.63, abs=0.005)
     assert contents["fert_n_urea"] == pytest.approx(0.466, abs=0.001)
     assert contents["fert_p_ground_basic_slag"] == pytest.approx(1.0)
+
+
+def test_product_properties_table_matches_the_master_data():
+    """md312_product_properties.csv (decision L74) holds the Master Data values: rerun check_master_data.py when not."""
+    props = dataloader.load_intermediate_exchange_properties(str(config.master_data_path()))
+    exchanges = dataloader.load_intermediate_exchanges(str(config.master_data_path()))
+    columns = {"dry_mass_kg_per_kg": "dry mass", "water_in_wet_mass_kg_per_kg": "water in wet mass",
+               "carbon_content_non_fossil_kg_per_kg_dm": "carbon content, non-fossil", "price_eur2005_per_unit": "price"}
+    for product, row in dataloader.table("md312_product_properties.csv").items():
+        assert exchanges[product].uuid == row["md312_uuid"], product
+        for column, prop in columns.items():
+            assert row[column] == pytest.approx(props[(product, prop)], rel=1e-12), (product, prop)

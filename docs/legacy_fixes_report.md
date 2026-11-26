@@ -3341,3 +3341,73 @@ apple_FR (fruit trees, 2000 kg compost = 6 kg P2O5; mineral 30 and solid manure 
 | apple_FR | `PO4_surfacewater` (drained + run-off) | 0.986163 | 1.009159 | +2.3 % |
 
 Groundwater, drained and erosion P unchanged; wheat_IT and rice_IN unchanged (no compost or sludge).
+
+## 59. CO2 uptake from the Master Data 3.12 carbon of the products (decision L74, 2026-11-26)
+
+Model side of template v3 T23; closes walkthrough item B6 for the model. Before, `CO2_from_yield` was the carbon of
+the main product only, with the legacy tables `CARBON_CONTENT_PER_CROP` (kg C/kg DM) and
+`WATER_CONTENT_FM_RATIO_PER_CROP`, and the by-products carried no carbon.
+
+### Tables
+
+- `data/crop_main_product.csv` (review table): the reference product of each of the 67 crops. Legacy names from
+  `ecospold_main_output_mapping.properties` (sri-crop-tool, `src/main/resources`), aligned with the Master Data 3.12
+  sheet IntermediateExchanges by `scripts/check_master_data.py`: 52 ok, 2 renamed (red cabbage, white cabbage),
+  4 confirmed by FC on 2026-11-26 (rice -> 'rice, non-basmati', cotton -> 'seed-cotton', hemp -> 'hemp stem,
+  dew-retted', mulberry -> 'mulberry leaves'; R9), 1 decision (flax: 'flax straw, dew-retted' or 'flax plant, harvested'), 8 missing (blueberry,
+  cassava, cranberry, ginger, guar, citrus lime, raspberry, turmeric: no Master Data 3.12 product).
+- `data/coproduct_list.csv` (review table): the Master Data products offered as co-products, seeded with the legacy
+  labels of `yield_BP1..3`: straw, coconut husk, biowaste (ok), 'waste wood, untreated' (renamed), linseed for
+  "flax seeds" (confirmed by FC, R9), "mulberry" (decision: no mulberry fruit in the Master Data).
+- `data/md312_product_properties.csv` (generated, no judgement): for the 60 products named in the two tables, the
+  Master Data 3.12 dry mass (kg/kg), water in wet mass (kg/kg), carbon content, non-fossil (kg C/kg DM), price
+  (EUR2005 per unit) and by-product classification. One product is flagged: mandarin, dry mass 0.11 but water in
+  wet mass 0.457 (sum 0.567 kg, not 1 kg); the model reads the dry mass.
+
+### Model
+
+| Key | Before | After |
+|---|---|---|
+| `yield_main_product_dry_content` | 1 - legacy water content | Master Data dry mass of the product of the crop |
+| `yield_main_product_carbon_content` | legacy `CARBON_CONTENT_PER_CROP` | Master Data carbon content, non-fossil |
+| `coproducts` (new optional input) | - | [{"product", "amount" (kg FM per ha and crop cycle), "fate" (removed, left on field)}], default [] |
+| `CO2_from_main_product` (new) | - | dry yield x carbon content x 44/12 |
+| `CO2_from_yield` | carbon of the main product | `CO2_from_main_product` + sum over removed co-products of fresh mass x dry mass x carbon content x 44/12 |
+| `energy_gross_calorific_value` | GCV x dry yield, else 11.5 x `CO2_from_yield` | GCV x dry yield, else 11.5 x `CO2_from_main_product` (main product only) |
+
+Co-products left on field count 0; fate `burned` and a product not in `md312_product_properties.csv` are errors;
+the legacy fields `yield_BP1..3_per_crop_cycle` give no carbon (they still feed the heavy-metal export with the
+SALCA row "co-product, mean"). The crops without a Master Data product (8 missing and flax) keep the legacy
+tables, which no other model reads (legacy, undocumented, provisional).
+
+Master Data 3.12 against legacy carbon content (kg C/kg DM), largest differences: wheat grain 0.465 / 0.424,
+grape 0.475 / 0.800, soybean 0.525 / 0.682, sunflower seed 0.780 / 0.843, rape seed 0.574 / 0.471, cashew 0.475 /
+0.900, mango 0.42 / 0.75, bell pepper 0.52 / 0.73. Dry mass: apricot 0.540 / 0.147, peach 0.534 / 0.127, chickpea
+0.211 / 0.91, coriander 0.078 / 0.919, mint 0.595 / 0.319, sweet corn 0.581 / 0.28.
+
+### Tests (`tests/legacy_model/test_coproduct_carbon.py`)
+
+| Case | Expected |
+|---|---|
+| wheat grain | carbon 0.4646009 kg C/kg DM, dry mass 0.85 |
+| 1000 kg FM straw removed (dry mass 0.85, C 0.4373767) | 1000 x 0.85 x 0.4373767 x 44.0095/12.0107 = 1362.24 kg CO2 |
+| the same straw left on field | 0 |
+| 1000 kg coconut husk removed (dry mass 1, C 0.52) | 1905.38 kg CO2 |
+| apple, 10 000 kg FM, with 1000 kg straw removed | gross energy 11.5 x 2418.366 (main product only); CO2 2418.366 + 1362.24 |
+
+`test_master_data_alignment.py` checks the generated table against the Master Data (skipped on CI).
+
+### Regression
+
+| Case | Key | Before | After | Change |
+|---|---|---|---|---|
+| wheat_IT | `CO2_from_yield` | 8585.878 | 9405.686 | +9.5 % (C 0.4241 -> 0.4646; dry mass 0.85 unchanged) |
+| apple_FR | `CO2_from_yield` | 8361.684 | 8464.28 | +1.2 % (C 0.4318 -> 0.44; dry mass 0.151 -> 0.15) |
+| apple_FR | `energy_gross_calorific_value` | 96159.37 | 97339.24 | +1.2 % (proxy 11.5 x CO2) |
+| apple_FR | dry yield (`hm_uptake_formula`) | 5285 | 5250 | -0.7 %; `heavymetal_to_soil_minus_uptake_*` +0.01 to +0.74 % |
+| rice_IN | `CO2_from_yield` | 7562.43 | 7397.72 | -2.2 % ('rice, non-basmati': C 0.475 -> 0.46412, dry mass 0.869 -> 0.87) |
+| rice_IN | `energy_gross_calorific_value` | 78687.9 | 78778.5 | +0.1 % (GCV table x dry yield) |
+| rice_IN | `N2o_air` | 2.637089 | 2.637298 | +0.008 % (crop residue N from the dry yield; value updated in `test_rice_ch4.py`) |
+| rice_IN | dry yield (`hm_uptake_formula`) | 4345 | 4350 | +0.1 %; `heavymetal_to_soil_minus_uptake_*` -0.004 to -0.27 % |
+
+Snapshots updated with `compare_regression.py --update` after FC's agreement (2026-11-26).
