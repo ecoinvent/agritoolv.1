@@ -3411,3 +3411,38 @@ grape 0.475 / 0.800, soybean 0.525 / 0.682, sunflower seed 0.780 / 0.843, rape s
 | rice_IN | dry yield (`hm_uptake_formula`) | 4345 | 4350 | +0.1 %; `heavymetal_to_soil_minus_uptake_*` -0.004 to -0.27 % |
 
 Snapshots updated with `compare_regression.py --update` after FC's agreement (2026-11-26).
+
+## 60. Heavy metals of the removed co-products (decision L75, 2026-11-26)
+
+Follows L74. The `removed` co-products of the input `coproducts` add to the harvest export of SALCAheavymetal 2023
+Eq. 4 (`HeavyMetalExportWithHarvestGenerator`, `hm_export_with_harvest`, then x A_i in `hmmodel`):
+fresh mass x Master Data 3.12 dry mass x concentration (mg/kg DM) of a Table 1 row. Co-products left on field
+export nothing; fate `burned` is an error. The legacy fields `yield_BP1..3_per_crop_cycle` are unchanged (row
+"co-product, mean", DM 0.6, R5).
+
+### Mapping (`data/hm_coproduct_product_mapping.csv`, signed by FC 2026-11-26, R10)
+
+| Master Data product | Crop | Table 1 row | Master Data dry mass | Zn (mg/kg DM) |
+|---|---|---|---|---|
+| straw | wheat | wheat straw | 0.85 | 9.6 |
+| straw | any | co-product, mean | 0.85 | 20.6 |
+| coconut husk | any | co-product, mean | 1 | 20.6 |
+| biowaste | any | green waste shredding | 0.4 | 71 |
+| waste wood, untreated | any | wood chips | 0.8 | 107 |
+| linseed | any | main product, mean | 0.909 | 29.1 |
+
+### Tests (`tests/legacy_model/test_coproduct_heavy_metals.py`, 1000 kg FM removed)
+
+| Crop, co-product | Expected |
+|---|---|
+| wheat, straw | Zn 1000 x 0.85 x 9.6 = 8160 mg; Cd 1000 x 0.85 x 0.2 = 170 mg |
+| apple, straw | Zn 1000 x 0.85 x 20.6 = 17 510 mg |
+| wheat, straw left on field | 0 |
+| coconut husk | Zn 20 600 mg; Hg 150 mg |
+| biowaste | Zn 28 400 mg; Pb 8000 mg |
+| waste wood, untreated | Zn 85 600 mg |
+| linseed | Zn 26 454.5 mg |
+
+### Regression
+
+No change: the regression cases have no co-products.

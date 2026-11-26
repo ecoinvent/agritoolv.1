@@ -143,6 +143,20 @@ def hm_entry(name):
     return entry
 
 
+HM_COPRODUCT_PRODUCT_TABLE = "hm_coproduct_product_mapping.csv"
+
+
+def hm_coproduct_product(product, crop):
+    """SALCAheavymetal 2023 Table 1 row of a co-product of the input ``coproducts`` (decision L75): the row of
+    ``hm_coproduct_product_mapping.csv`` for the Master Data product and the crop, else for the product and
+    crop "any"."""
+    mapping = {(r["md312_product"], r["crop"]): r["salca2023_product"] for r in rows(HM_COPRODUCT_PRODUCT_TABLE)}
+    for key in ((product, crop), (product, "any")):
+        if key in mapping:
+            return mapping[key]
+    raise KeyError("Co-product '%s' not found in %s" % (product, HM_COPRODUCT_PRODUCT_TABLE))
+
+
 def single_metal_row(filename, metals):
     """Heavy-metal vector of a one-row table (deposition, leaching); NA -> 0.0."""
     row = next(iter(table(filename).values()))

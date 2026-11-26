@@ -193,7 +193,10 @@ class HeavyMetalExportWithHarvestGenerator(object):
     * main product: dry yield x concentration of the product mapped to the crop in
       data/hm_crop_product_mapping_salca2023.csv ("main product, mean" when not in Table 1);
     * co-products (template fields yield_BP1..3_per_crop_cycle, kg fresh matter): fresh mass x
-      DM x concentration of the row in data/hm_coproduct_mapping.csv ("co-product, mean").
+      DM x concentration of the row in data/hm_coproduct_mapping.csv ("co-product, mean");
+    * removed co-products of the input ``coproducts`` (decision L75, template v3 T11): fresh mass x Master Data
+      3.12 dry mass (data/md312_product_properties.csv, as for their carbon, L74) x concentration of the row of
+      data/hm_coproduct_product_mapping.csv for the product and the crop. Co-products left on field export nothing.
     The pesticide term of Eq. 4 is computed in hmmodel.
     """
     def generateDefault(self, field, generators):
@@ -209,6 +212,11 @@ class HeavyMetalExportWithHarvestGenerator(object):
                 continue
             for element, column in METAL_COLUMNS.items():
                 export[element] += float(fresh) * coproduct["dm"] * coproduct[column]
+        for item in removed_coproducts(generators["coproducts"]):
+            dry = float(item["amount"]) * dataloader.product_properties(item["product"])["dry_mass_kg_per_kg"]
+            row = dataloader.hm_entry(dataloader.hm_coproduct_product(item["product"], generators["crop"]))
+            for element, column in METAL_COLUMNS.items():
+                export[element] += dry * row[column]
         return export
 
 
@@ -280,6 +288,20 @@ class DryYieldGenerator(object):
 COPRODUCT_FATES = ("removed", "left on field")
 
 
+def check_coproduct_fate(coproduct):
+    """Raise ValueError for a fate other than removed or left on field (burned is not supported, template v3 T11)."""
+    if coproduct["fate"] not in COPRODUCT_FATES:
+        raise ValueError("Co-product '%s': fate '%s' not supported (use one of %s)"
+                         % (coproduct["product"], coproduct["fate"], ", ".join(COPRODUCT_FATES)))
+
+
+def removed_coproducts(coproducts):
+    """The co-products of the input ``coproducts`` with fate removed, after checking every fate."""
+    for coproduct in coproducts:
+        check_coproduct_fate(coproduct)
+    return [coproduct for coproduct in coproducts if coproduct["fate"] == "removed"]
+
+
 def coproduct_carbon_dioxide(coproduct):
     """kg CO2 of the biogenic carbon of one co-product per ha and crop cycle (decision L74, template v3 T23).
 
@@ -288,12 +310,9 @@ def coproduct_carbon_dioxide(coproduct):
     field: fresh mass x dry mass x carbon content, non-fossil (Master Data 3.12 properties) x 44/12. A co-product
     left on field counts 0: its carbon returns to air and soil. Fate "burned" is not supported (template v3 T11).
     """
-    fate = coproduct["fate"]
-    if fate not in COPRODUCT_FATES:
-        raise ValueError("Co-product '%s': fate '%s' not supported (use one of %s)"
-                         % (coproduct["product"], fate, ", ".join(COPRODUCT_FATES)))
+    check_coproduct_fate(coproduct)
     properties = dataloader.product_properties(coproduct["product"])
-    if fate != "removed":
+    if coproduct["fate"] != "removed":
         return 0.0
     return float(coproduct["amount"]) * properties["dry_mass_kg_per_kg"] \
         * properties["carbon_content_non_fossil_kg_per_kg_dm"] * MA_CO2 / MA_C
