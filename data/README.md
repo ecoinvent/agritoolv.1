@@ -197,7 +197,7 @@ by `scripts/netcdf_classic.py`).
 | `hm_fertiliser_row_mapping.csv` | AgriToolV.1 | model | Mineral fertiliser types -> SALCA fertiliser rows. |
 | `hm_manure_class_mapping.csv` | AgriToolV.1 | model | Manure types -> SALCA farmyard manure rows. |
 | `hm_organic_fertiliser_mapping.csv` | AgriToolV.1 | model | Compost and sludge types -> SALCA organic fertiliser rows. |
-| `hm_pesticide_mapping.csv` | AgriToolV.1 (contents from Perkow & Ploss 1994 via SALCA) | model | Metal-containing pesticides -> SALCA pesticide rows. |
+| `hm_pesticide_mapping.csv` | AgriToolV.1 (contents from Perkow & Ploss 1994 via SALCA) | model | Metal-containing pesticides -> SALCA pesticide rows; `field_share_in_hm_balance` = yes (copper only) keeps their field share out of the OLCA-Pest soil emission (L78). |
 
 ## Land use change
 

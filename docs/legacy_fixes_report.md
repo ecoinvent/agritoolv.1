@@ -3560,3 +3560,49 @@ rain 570 mm and 285 mm per cycle, available organic N (24.83, 1.05, 13.5, feathe
 coefficient 0.5, negative balance, flooded and upland rice.
 
 Regression: no change (the balance nitrate is not written).
+
+## 63. Copper fungicide counted once in agricultural soil (decision L78, 2026-11-27)
+
+Closes walkthrough A8. Before L78 the copper of copper fungicides reached the flow 'Copper' (soil, agricultural,
+`fb876e1f-7bc3-54fb-9bb2-c06a863283de`) twice:
+
+1. OLCA-Pest (L65, `models/olcapestmodel.py`): soil, agricultural = (f_soil + f_crop + f_off_field x agri) x m, key
+   `pestisoil_fungicides_copper_cu`;
+2. SALCAheavymetal 2023 balance (L10, L14, `models/hmmodel.py`): the pesticide metal input of Eq. 2 is
+   (1 - f_air - f_OFS) x m = (f_soil + f_crop) x m, written to soil (`heavymetal_to_soil_minus_uptake_cu`), to water
+   and in the harvest.
+
+Now OLCA-Pest leaves out the field share (f_soil + f_crop) x m for the active ingredients with
+`field_share_in_hm_balance` = yes in `hm_pesticide_mapping.csv` (only `copper_cu`, flow 'Copper'): soil, agricultural =
+f_off_field x agri x m (drift to other fields). Air, off-field water and off-field forestry are unchanged. The
+dithiocarbamates (mancozeb, metiram, propineb, zineb, ziram) are unchanged: their OLCA-Pest flows are the molecules and
+the HM balance counts only their Zn and Mn contents (SALCAheavymetal 2023 Table 1).
+
+Copper reaches the field through the same Excel field `part_fungicides_copper_cu` in both models
+(`hm_pesticides_quantities` and `specified_pesticides`, `excelInputMappingRules.py`); the default generator gives only
+a total a.i. (`pest_total`), never copper, so no copper is lost.
+
+### apple_FR (3000 g copper, OLCA-Pest scenario SC25, Fruit trees temperate / Fun)
+
+f_air 0.08, f_soil 0.265964823, f_crop 0.620584586, f_off_field 0.033450591; field share f_soil + f_crop =
+0.886549409.
+
+| Key (kg/ha) | Before | After |
+|---|---|---|
+| `pestiair_fungicides_copper_cu` | 0.24 | 0.24 |
+| `pestiwater_fungicides_copper_cu` | 0.0016946 | 0.0016946 |
+| `pestiforestry_fungicides_copper_cu` | 0.0378517 | 0.0378517 |
+| `pestisoil_fungicides_copper_cu` | 2.7204537 | 0.0608055 |
+| field share in the HM balance, (f_soil + f_crop) x 3 kg | 2.6596482 | 2.6596482 |
+
+Mass check after L78: 0.24 + 0.0016946 + 0.0378517 + 0.0608055 + 2.6596482 = 3.0000 kg (applied amount). The
+agricultural-soil total of 'Copper' falls by 2.6596482 kg; the heavy-metal outputs of Cu are unchanged.
+
+### Tests (`tests/legacy_model/test_copper_pesticide_soil.py`)
+
+Scenario SC25 for apple; apple_FR copper 3000 g: soil 0.0608055, air 0.24, water 0.0016946, forestry 0.0378517 kg;
+mancozeb 1000 g keeps (f_soil + f_crop + f_off_field x agri) x 1 kg; mass balance OLCA-Pest + HM field share = 3 kg;
+only `copper_cu` is flagged yes.
+
+Regression: apple_FR `pestisoil_fungicides_copper_cu` 2.72045 -> 0.0608055 kg, every other key unchanged; wheat_IT and
+rice_IN unchanged (no copper).

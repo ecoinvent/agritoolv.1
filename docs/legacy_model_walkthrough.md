@@ -351,7 +351,7 @@ Seven metals: Cd, Cu, Zn, Pb, Ni, Cr, Hg.
 | A5 | HM: manure input 1000 × too low; accumulation factor 0.86; deposition term missing; export not allocated | F4, F4d |
 | A6 | Fertiliser Zn "other" counted as Pb; lime per kg CaO applied to kg Ca | F4c |
 | A7 | Seed HM uses numbers of trees or seedlings as kg | L10 (SALCAheavymetal 2023 Table 1, recommendation 8: seed in kg only; seedlings and trees count 0) |
-| A8 | Copper fungicide counted twice in soil (direct emission + HM balance) | **Open.** Still present: the copper fungicide reaches the flow `Copper` (soil, agricultural, `fb876e1f`) twice, through the soil fraction of OLCA-Pest (L65, `pestisoil_fungicides_copper_cu`) and through the SALCAheavymetal balance, whose pesticide input already counts f_soil + f_crop (L14) |
+| A8 | Copper fungicide counted twice in soil (direct emission + HM balance) | L78: OLCA-Pest no longer writes the field share (f_soil + f_crop) x m of copper to agricultural soil, counted by the SALCAheavymetal balance (L14); air, off-field water, forestry and off-field agricultural soil stay (`field_share_in_hm_balance` of `hm_pesticide_mapping.csv`) |
 | A9 | Negative R factor, so negative erosion, at low precipitation | L60 (R from GloREDa; the LANCA R equations are no longer used) |
 | A10 | Groundwater utility water written as `Water, river` | R12: `elementary_flow_alignment.csv` maps `utilities_wateruse_ground` to `Water, well, in ground` (`67c40aae`, natural resource, in water); `utilities_wateruse_surface` stays `Water, river` (`8c75e7ab`). Writer: `java_changes_pending.md` |
 | A11 | Sesame seed key mismatch; bromofenoxim and fenoxaprop product inputs dropped | Writer: `java_changes_pending.md` (to carry into the new writer) |
@@ -398,7 +398,6 @@ Seven metals: Cd, Cu, Zn, Pb, Ni, Cr, Hg.
 
 | Effort | Item | What is needed |
 |---|---|---|
-| Small | A8 | Do not write the OLCA-Pest soil fraction of metal active ingredients (copper) when the SALCAheavymetal balance counts them (L14); air, water and forestry fractions stay |
 | Small | C3 | List the crops still without a seed or planting default and decide (warning or source) |
 | Medium | L77 next step | Soil mineralisation Mh (COMIFER 2013 Eq. 7-10) in the N balance, then the decision to replace SQCB |
 | Medium | B2 | Land-management soil-carbon change (SOC change input still 0) |

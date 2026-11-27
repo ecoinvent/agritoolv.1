@@ -20,6 +20,12 @@ off-field part is split with the shares of agricultural land, forest land and in
 (faostat_country_land_shares.csv, FAOSTAT Land Use, redistributed as in the tool); a country without shares takes those
 of its M49 sub-region, then region, then the World. The four parts sum to m (to the 1e-9 rounding of the fractions).
 
+Decision L78: for the active ingredients whose flow is itself a metal of the heavy-metal balance
+(field_share_in_hm_balance = yes in hm_pesticide_mapping.csv: copper_cu), the field share (f_soil + f_crop) x m is
+counted by the SALCAheavymetal 2023 balance (hmmodel.py, L10, L14) and is not written here, so that the metal reaches
+agricultural soil once: soil, agricultural = f_off_field x agri x m (drift to other fields). Air, forestry and water
+stay as above; the OLCA-Pest parts then sum to (f_air + f_off_field) x m.
+
 Active ingredients ending with '_other' or '_unspecified' are not substances: no emission, as in the legacy writer.
 Horticultural oil (Mineral oil) is not a 'part_*' key and keeps its legacy emission (100 % to agricultural soil).
 """
@@ -31,6 +37,7 @@ SUBSTITUTION_TABLE = "olca_pest_scenario_substitution.csv"
 CLASS_TABLE = "olca_pest_pesticide_class.csv"
 LAND_SHARES_TABLE = "faostat_country_land_shares.csv"
 COUNTRY_MAPPING = "faostat_country_mapping.csv"
+HM_PESTICIDE_MAPPING = "hm_pesticide_mapping.csv"
 WORLD_M49 = "001"
 NOT_A_SUBSTANCE = ("_other", "_unspecified")
 
@@ -84,11 +91,20 @@ def land_shares(country):
     raise KeyError("No land shares for '%s' in %s" % (country, LAND_SHARES_TABLE))
 
 
-def split(grams, fractions, shares):
-    """Emissions [same unit as grams] per compartment of one active ingredient."""
+def field_share_in_hm_balance():
+    """Active ingredients (legacy names, e.g. 'copper_cu') whose field share is counted by the heavy-metal balance
+    (field_share_in_hm_balance = yes in hm_pesticide_mapping.csv; decision L78)."""
+    return {row["legacy_pesticide"] for row in dataloader.rows(HM_PESTICIDE_MAPPING)
+            if row["field_share_in_hm_balance"] == "yes"}
+
+
+def split(grams, fractions, shares, field_share=True):
+    """Emissions [same unit as grams] per compartment of one active ingredient. field_share=False leaves out the
+    field share (f_soil + f_crop) x m of agricultural soil, counted by the heavy-metal balance instead (L78)."""
     off_field = fractions["f_off_field"] * grams
+    field = (fractions["f_soil"] + fractions["f_crop"]) * grams if field_share else 0.0
     return {"air": fractions["f_air"] * grams,
-            "soil_agricultural": (fractions["f_soil"] + fractions["f_crop"]) * grams + off_field * shares["agri"],
+            "soil_agricultural": field + off_field * shares["agri"],
             "soil_forestry": off_field * shares["forest"],
             "water_surface": off_field * shares["water"]}
 
@@ -108,6 +124,7 @@ class OlcaPestModel(object):
     def compute(self):
         classes = dataloader.table(CLASS_TABLE, numeric=False)
         shares = land_shares(self.country)
+        in_hm_balance = field_share_in_hm_balance()
         result = {}
         for key, grams in self.specified_pesticides.items():
             variable = key.replace("part_", "pesti_", 1)
@@ -116,5 +133,6 @@ class OlcaPestModel(object):
             if variable not in classes:
                 raise KeyError("Pesticide '%s' is not in %s" % (variable, CLASS_TABLE))
             fractions = scenario(self.crop, classes[variable]["olca_pest_class"])
-            result[variable] = split(grams / 1000.0, fractions, shares)
+            name = variable.split("_", 2)[2]  # 'pesti_fungicides_copper_cu' -> 'copper_cu'
+            result[variable] = split(grams / 1000.0, fractions, shares, field_share=name not in in_hm_balance)
         return result
