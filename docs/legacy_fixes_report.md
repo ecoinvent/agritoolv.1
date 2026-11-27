@@ -3631,8 +3631,8 @@ seed [kg/(ha and crop cycle)] = seed input of the crop [kg/kg product] x 10000 /
 | coriander production | IN, RoW | linseed seed, at farm | 45.0 each |
 
 Not counted, because they are not seed of the crop: the grass seed of the four Swiss datasets ('grass seed, Swiss
-integrated production, for sowing' or 'grass seed, organic, for sowing', sown after the crop; with it the Swiss carrot
-would get 31.6 kg/ha) and 'planting, by row crop planter' (ha) of the US sweet corn datasets. Rejected: 'flax
+integrated production, for sowing' or 'grass seed, organic, for sowing': green manure, not seed of the crop; with it the Swiss
+carrot would get 31.6 kg/ha) and 'planting, by row crop planter' of the US sweet corn datasets (an operation, in ha). Rejected: 'flax
 production' IN and RoW, 60 kg/ha of linseed seed for 'flax plant, harvested' (the fresh plant, rejected as product of
 flax in R11).
 
@@ -3648,10 +3648,10 @@ RoW, the mean of all geographies.
 | hemp | 0 | 47.26 (FR) | FR 47.26 |
 | coriander | 0 | 45.0 | IN 45.0 |
 
-Sweet corn RoW, to be reviewed: seed 0.00153831 kg/kg, transformation 0.705657 m2/kg (14,171 kg/ha per crop cycle),
+Sweet corn RoW, limit recorded by FC (2026-11-27): seed 0.00153831 kg/kg, transformation 0.705657 m2/kg (14,171 kg/ha per crop cycle),
 occupation 0.214672 m2a/kg (123 days), no yield comment on the reference product; the seed comment states 'Sowing
 density: 16kg/ha' (Nordby et al. 2004), which at this transformation would be 0.00112905 kg/kg. TH (same comment) gives
-16.0 kg/ha. The method value 21.8 is kept.
+16.0 kg/ha. The method value 21.8 is kept, without correction by hand.
 
 Crops without source (11): the legacy value, or 0 when the legacy table has none (legacy, undocumented, provisional),
 with a warning naming the crop and the field each time the default is used:
@@ -3659,7 +3659,7 @@ with a warning naming the crop and the field each time the default is used:
 | Field | Crops | Legacy value |
 |---|---|---|
 | `seeds` | cassava, guar | 0 |
-| `seeds` | turmeric | 100 kg/ha |
+| `seeds` | turmeric | 100 kg/ha (kept by FC, O7) |
 | `nb_seedlings` | chilli, eggplant, ginger | 0 |
 | `nb_seedlings` | raspberry | none -> 0 |
 | `nb_planted_trees` | sugarcane, blueberry, cranberry, pineapple | none -> 0 |

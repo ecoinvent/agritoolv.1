@@ -79,7 +79,7 @@ def test_regions_and_variants_are_averaged_and_rer_is_not_a_country():
 
 
 def test_only_the_seed_of_the_crop_is_counted():
-    # Swiss datasets also sow grass seed after the crop; US sweet corn has 'planting, by row crop planter' (ha)
+    # Swiss datasets also sow grass seed (green manure); US sweet corn has 'planting, by row crop planter' (ha)
     for row in RATES:
         exchanges = set(row["seed_exchange"].split("|"))
         crop = next(c for c in ECOINVENT_CROPS if row["activity_name"] in MAPPING[c]["ecoinvent_activities"].split("|"))

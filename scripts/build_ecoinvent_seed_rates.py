@@ -8,7 +8,7 @@ For every dataset (activity and geography) of the activities of the crops of dat
 'ecoinvent':
   - seed input = sum of the technosphere inputs named in the column ecoinvent_seed_exchanges of the crop (kg per kg of
     the reference product; all reference products of these activities are 1 kg). Other seed inputs of the dataset
-    (e.g. the grass seed of the Swiss datasets, sown after the crop) are not counted and are listed on the screen;
+    (e.g. the grass seed of the Swiss datasets, green manure) are not counted and are listed on the screen;
   - transformation = sum of the elementary exchanges 'Transformation, from ...' (m2 per kg);
   - seed_kg_per_ha_and_crop_cycle = seed input x 10000 / transformation (the land is transformed once per crop cycle).
 A dataset without a seed input of its crop is an error. Only these derived values per ha are stored (no ecoinvent
