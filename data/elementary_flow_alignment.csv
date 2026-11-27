@@ -1,7 +1,7 @@
 source,model_variable,legacy_name,legacy_unit,compartment,subcompartment,status,md312_name,md312_uuid,md312_unit,candidates,note,reviewed_by
 EcospoldTemplateSubstanceUsages.java,CO2_from_yield,"Carbon dioxide, in air",kg,natural resource,in air,ok,"Carbon dioxide, in air",cc6a1abb-b123-4ca6-8f16-38209df609be,kg,,,
 EcospoldTemplateSubstanceUsages.java,energy_gross_calorific_value,"Energy, gross calorific value, in biomass",MJ,natural resource,biotic,ok,"Energy, gross calorific value, in biomass",01c12fca-ad8b-4902-8b48-2d5afe3d3a0f,MJ,,,
-EcospoldTemplateSubstanceUsages.java,utilities_wateruse_ground,"Water, river",m3,natural resource,in water,proposed,"Water, well, in ground",67c40aae-d403-464d-9649-c12695e43ad8,m3,,"groundwater source; MD 3.12 'Water, well, in ground'; corrects R7 (walkthrough A10)",
+EcospoldTemplateSubstanceUsages.java,utilities_wateruse_ground,"Water, river",m3,natural resource,in water,confirmed,"Water, well, in ground",67c40aae-d403-464d-9649-c12695e43ad8,m3,,"groundwater source; MD 3.12 'Water, well, in ground'; corrects R7 (walkthrough A10)",FC 2026-11-27
 EcospoldTemplateSubstanceUsages.java,utilities_wateruse_surface,"Water, river",m3,natural resource,in water,ok,"Water, river",8c75e7ab-8ab8-41e4-b394-c166ff5b050d,m3,,,
 EcospoldTemplateSubstanceUsages.java,occupation_annual_organic_non-irr,"Occupation, annual crop, non-irrigated",m2*year,natural resource,land,ok,"Occupation, annual crop, non-irrigated",a6889a22-e99e-42ea-85cd-4a68d7975dcd,m2*year,,,
 EcospoldTemplateSubstanceUsages.java,occupation_annual_organic_irr,"Occupation, annual crop, irrigated",m2*year,natural resource,land,ok,"Occupation, annual crop, irrigated",c4a82f46-381f-474c-a362-3363064b9c33,m2*year,,,
