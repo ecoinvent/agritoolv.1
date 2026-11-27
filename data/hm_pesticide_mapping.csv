@@ -1,7 +1,7 @@
-legacy_pesticide,salca2023_row,olca_pest_class,note
-copper_cu,pesti_copper,Fun,amount entered as copper (pure substance)
-mancozeb,pesti_mancozeb,Fun,
-metiram,pesti_metiram,Fun,
-propineb,pesti_propineb,Fun,
-zineb,pesti_zineb,Fun,
-ziram,pesti_ziram,Fun,
+legacy_pesticide,salca2023_row,olca_pest_class,field_share_in_hm_balance,note
+copper_cu,pesti_copper,Fun,yes,amount entered as copper (pure substance); the OLCA-Pest flow is the metal 'Copper' of the HM balance: its field share (f_soil + f_crop) x m is counted by the HM balance (L14) and not written by OLCA-Pest to agricultural soil (L78)
+mancozeb,pesti_mancozeb,Fun,no,
+metiram,pesti_metiram,Fun,no,
+propineb,pesti_propineb,Fun,no,
+zineb,pesti_zineb,Fun,no,
+ziram,pesti_ziram,Fun,no,
