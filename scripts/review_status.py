@@ -32,7 +32,7 @@ Review tables (all in data/):
   ifastat_product_type_mapping.csv        usable when status is confirmed (mineral fertiliser mixes, L45)
   ifastat_country_mapping.csv             idem
   ifastat_fubc_country_mapping.csv        usable when status is confirmed (time factor of the IFA rates, L53)
-  seed_rate_crop_mapping.csv              usable when status is confirmed (default seed of the sown crops, L46)
+  seed_rate_crop_mapping.csv              usable when status is confirmed (default seed of the sown crops, L46, L79)
   ecoinvent312_planting_crop_mapping.csv  usable when status is confirmed (default seedlings and trees, L47)
   atlas2026_pesticides_review.csv         usable when status is confirmed (default total pesticides, L48)
   soil_fumigant_active_ingredients.csv    idem

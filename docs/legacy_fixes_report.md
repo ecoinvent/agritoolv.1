@@ -3606,3 +3606,79 @@ only `copper_cu` is flagged yes.
 
 Regression: apple_FR `pestisoil_fungicides_copper_cu` 2.72045 -> 0.0608055 kg, every other key unchanged; wheat_IT and
 rice_IN unchanged (no copper).
+
+## 64. Default seed of six sown crops from ecoinvent 3.12; crops without source flagged (decision L79, 2026-11-27)
+
+Walkthrough C3. The six sown crops without FAOSTAT SUA seed and without TCF rate that have an ecoinvent 3.12 dataset take
+their default seed from these datasets (same source and method as the plantings of L47, section 35). Per dataset of
+'exchanges (3.12, cut-off).xlsx':
+
+seed [kg/(ha and crop cycle)] = seed input of the crop [kg/kg product] x 10000 / Transformation, from [m2/kg product]
+
+`scripts/build_ecoinvent_seed_rates.py` writes `data/ecoinvent312_seed_rates.csv` (only the derived values per ha):
+
+| Activity | Geography | Seed exchange | kg/(ha and crop cycle) |
+|---|---|---|---|
+| carrot production | CN, IL, NL, RoW | carrot seed, for sowing | 4.2 each |
+| carrot production, conventional, plain region | CH | carrot seed, Swiss integrated production, at farm | 1.6 |
+| carrot production, organic, plain region | CH | carrot seed, Swiss integrated production, at farm | 1.2 |
+| sugar beet production | DE, FR, RU, RoW, US | sugar beet seed, for sowing | 3.0, 2.0, 3.0, 2.1, 2.1 |
+| sugar beet production, conventional / organic, plain region | CH | sugar beet seed, for sowing | 2.1, 2.1 |
+| sweet corn production | HU, RoW, TH | maize seed, Swiss integrated production, for sowing | 15.0, 21.7996, 16.0 |
+| sweet corn production | US-CA, US-FL, US-MN, US-OR, US-WA, US-WI | maize seed, for sowing | 9.49774, 11.0807, 12.2679, 12.2729, 12.2729, 9.68475 |
+| flax straw production, dew-retted | RER | linseed seed, at farm | 115.0 |
+| hemp stem production, dew-retted | FR | linseed seed, for sowing | 47.2603 |
+| coriander production | IN, RoW | linseed seed, at farm | 45.0 each |
+
+Not counted, because they are not seed of the crop: the grass seed of the four Swiss datasets ('grass seed, Swiss
+integrated production, for sowing' or 'grass seed, organic, for sowing', sown after the crop; with it the Swiss carrot
+would get 31.6 kg/ha) and 'planting, by row crop planter' (ha) of the US sweet corn datasets. Rejected: 'flax
+production' IN and RoW, 60 kg/ha of linseed seed for 'flax plant, harvested' (the fresh plant, rejected as product of
+flax in R11).
+
+Defaults (`defaultMatrixSeed._ecoinvent_means`, the rule of L47): country = mean of its datasets, GLO = RoW or, without
+RoW, the mean of all geographies.
+
+| Crop | Legacy GLO | New GLO | Countries |
+|---|---|---|---|
+| carrot | 4.2 | 4.2 | CN, IL, NL 4.2; CH 1.4 |
+| sugar beet | 2.1 | 2.1 | DE 3.0, FR 2.0, RU 3.0, US 2.1, CH 2.1 |
+| sweet corn | 25 | 21.80 | HU 15.0, TH 16.0, US 11.18 |
+| flax | 0 | 115.0 (RER) | none |
+| hemp | 0 | 47.26 (FR) | FR 47.26 |
+| coriander | 0 | 45.0 | IN 45.0 |
+
+Sweet corn RoW, to be reviewed: seed 0.00153831 kg/kg, transformation 0.705657 m2/kg (14,171 kg/ha per crop cycle),
+occupation 0.214672 m2a/kg (123 days), no yield comment on the reference product; the seed comment states 'Sowing
+density: 16kg/ha' (Nordby et al. 2004), which at this transformation would be 0.00112905 kg/kg. TH (same comment) gives
+16.0 kg/ha. The method value 21.8 is kept.
+
+Crops without source (11): the legacy value, or 0 when the legacy table has none (legacy, undocumented, provisional),
+with a warning naming the crop and the field each time the default is used:
+
+| Field | Crops | Legacy value |
+|---|---|---|
+| `seeds` | cassava, guar | 0 |
+| `seeds` | turmeric | 100 kg/ha |
+| `nb_seedlings` | chilli, eggplant, ginger | 0 |
+| `nb_seedlings` | raspberry | none -> 0 |
+| `nb_planted_trees` | sugarcane, blueberry, cranberry, pineapple | none -> 0 |
+
+For blueberry, cranberry, pineapple and raspberry (exchange 'fruit tree seedling, for planting' in
+`seed_exchange_mapping.csv`) the warning adds that the dataset has no planting input although the exchange exists.
+
+Code: `defaultGeneration.SowingDefaultGenerator` (field `seeds`, base of `PlantingDefaultGenerator`) looks up the crop in
+its table; a crop in no table raises KeyError (before: `SafeDefaultGenerator("unsafe_seeds", 0.0)` and
+`SeedQuantitiesDefaultGenerator` turned any KeyError into 0). The legacy plantings are not multiplied by the orchard
+lifetime (all are 0).
+
+### Tests (`tests/legacy_model/test_ecoinvent_seed_defaults.py`)
+
+Expected values through the default generator (tolerance 1 %): carrot GLO 4.2, NL 4.2, CH 1.4; sugar beet GLO 2.1,
+DE 3.0, FR 2.0, CH 2.1, US 2.1; sweet corn GLO 21.8, HU 15.0, TH 16.0, US 11.18; flax GLO 115; hemp GLO and FR 47.26;
+coriander GLO 45; a country without dataset takes GLO; each of the 11 crops without source gives its legacy value and
+exactly one warning; a template value gives no warning; a crop in no table raises KeyError; slow test: the table equals
+a rebuild from the exchanges file. `test_default_seed.py`: sugar beet DE 2.1 -> 3.0. `test_planting_defaults.py`: the
+legacy plantings warn.
+
+Regression: wheat_IT, rice_IN and apple_FR unchanged (sourced seed defaults or own plantings).

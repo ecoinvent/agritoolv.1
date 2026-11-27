@@ -7,7 +7,7 @@ import warnings
 from defaultMatrixEvapoTranspiration import EVAPO_TRANSPI_PER_CROP_PER_COUNTRY
 from defaultMatrixSeed import NB_SEEDS_PER_PARTIAL_CROP_PER_COUNTRY, \
     NB_PLANTED_TREES_PER_PARTIAL_CROP_PER_COUNTRY, \
-    NB_SEEDLINGS_PER_PARTIAL_CROP_PER_COUNTRY
+    NB_SEEDLINGS_PER_PARTIAL_CROP_PER_COUNTRY, PLANTING_MAPPING, SEED_MAPPING, legacy_crops
 from defaultMatrixTotalPesticides import TOTAL_PESTICIDES_PER_CROP_PER_COUNTRY
 from defaultMatrixYieldPerCropCycle import YIELD_PER_CROP_CYCLE_PER_CROP_PER_COUNTRY
 from defaultTables import CLAY_CONTENT_PER_CROP_PER_COUNTRY, SOIL_CARBON_CONTENT_PER_CROP_PER_COUNTRY, \
@@ -398,6 +398,8 @@ class OrchardLifetimeDefaultGenerator(object):
 
 
 class SeedQuantitiesDefaultGenerator(object):
+    """{crop: amount per ha}: the template field or the default of nb_planted_trees (tree crops), nb_seedlings
+    (seedling crops) or seeds (sown crops). No fallback to 0 (decision L79): a crop without any default raises KeyError."""
     def generateDefault(self, field, generators):
         crop = generators["crop"]
         if crop in TREE_BASED_CROPS:
@@ -406,10 +408,7 @@ class SeedQuantitiesDefaultGenerator(object):
             value_field = "nb_seedlings"
         else:
             value_field = "seeds"
-        try:
-            return {crop: generators[value_field]}
-        except KeyError:
-            return {crop: 0.0}
+        return {crop: generators[value_field]}
 
 
 class CropCountryMatrixLookupDefaultGenerator(object):
@@ -424,16 +423,64 @@ class CropCountryMatrixLookupDefaultGenerator(object):
             return currentCropTable["GLO"]
 
 
-class PlantingDefaultGenerator(CropCountryMatrixLookupDefaultGenerator):
+# template field -> (unit of the default, kind of input in the dataset), for the warning of the crops without source
+_SOWING_FIELDS = {"seeds": ("kg per ha", "seed"), "nb_seedlings": ("seedlings per ha", "planting"),
+                  "nb_planted_trees": ("trees per ha", "planting")}
+
+
+@lru_cache(maxsize=None)
+def _seed_exchange(crop):
+    """Exchange of the seed, seedlings or trees of the crop in seed_exchange_mapping.csv, or None (no_exchange)."""
+    for row in dataloader.rows("seed_exchange_mapping.csv"):
+        if row["crop_key"] == crop and row["status"] == "confirmed" and row["seed_exchange_name"]:
+            return row["seed_exchange_name"]
+    return None
+
+
+class SowingDefaultGenerator(CropCountryMatrixLookupDefaultGenerator):
+    """Seed (kg), seedlings or trees per ha (decisions L46, L47, L79): the value of the country in the table, else GLO.
+
+    The crops of the mapping with use 'legacy' have no source: they take the legacy value of the table, 0 when the
+    legacy table has none (legacy, undocumented, provisional), and a warning names the crop and the field each time
+    this default is used. A crop in no table raises KeyError: the default is never a silent 0.
+    """
+    def __init__(self, table, mapping):
+        super().__init__(table)
+        self._mapping = mapping
+        self._legacy = legacy_crops(mapping)
+
+    def generateDefault(self, field, generators):
+        crop = generators["crop"]
+        if crop not in self._table:
+            raise KeyError("%s: no default for crop '%s' (not in %s)" % (field, crop, self._mapping))
+        if crop in self._legacy:
+            values = self._table[crop]
+            value = values.get(generators["country"], values.get("GLO", 0.0))
+            warnings.warn(self._no_source_message(crop, field, value))
+            return value
+        return super().generateDefault(field, generators)
+
+    def _no_source_message(self, crop, field, value):
+        unit, kind = _SOWING_FIELDS[field]
+        message = ("Crop '%s': default %s = %g %s, without source (legacy, undocumented, provisional; %s; decision "
+                   "L79); give %s in the template" % (crop, field, value, unit, self._mapping, field))
+        exchange = _seed_exchange(crop)
+        if value == 0 and exchange:
+            message += ("; the dataset has no %s input although the exchange '%s' exists for this crop "
+                        "(seed_exchange_mapping.csv)" % (kind, exchange))
+        return message
+
+
+class PlantingDefaultGenerator(SowingDefaultGenerator):
     """Seedlings or trees per ha (decision L47). For the plantings amortised over the plantation lifetime
     (planting_amortised_over_lifetime of crop_types.csv: trees, asparagus) the table holds the ecoinvent 3.12 plantings
     per ha and year, multiplied here by the orchard lifetime in use, so that the yearly planting of outputMapping.py
     (number / orchard_lifetime) equals the ecoinvent input; for the other crops the table holds the number per ha and
-    crop cycle."""
+    crop cycle. The legacy values of the crops without source (decision L79) are used as they are."""
     def generateDefault(self, field, generators):
         value = super().generateDefault(field, generators)
-        if dataloader.table("crop_types.csv", numeric=False)[generators["crop"]]["planting_amortised_over_lifetime"] \
-                == "yes":
+        if generators["crop"] not in self._legacy and dataloader.table("crop_types.csv", numeric=False)[
+                generators["crop"]]["planting_amortised_over_lifetime"] == "yes":
             value *= generators["orchard_lifetime"]
         return value
 
@@ -634,18 +681,6 @@ class FlatRatioRepartitionGenerator(object):
         return {k: 1.0 / len(self._enumClass) for k in self._enumClass}
 
 
-class SafeDefaultGenerator(object):
-    def __init__(self, field, defaultValue):
-        self._field = field
-        self._defaultValue = defaultValue
-
-    def generateDefault(self, field, generators):
-        try:
-            return generators[self._field]
-        except KeyError:
-            return self._defaultValue
-
-
 # Castor bean: Tree, estimated to be 0 (see ALCIG engine)
 # Chickpea: Not much crop residues (https://www.saskatchewan.ca/business/agriculture-natural-resources-and-industry/agribusiness-farmers-and-ranchers/crops-and-irrigation/pulse-crop-bean-chickpea-faba-bean-lentils/chickpea/adaptation-and-varieties)
 # Coriander: pdf Coriander_1 in documentation file (juste take the straw which is the main crop residue: https://books.google.ch/books?id=gR22BgAAQBAJ&pg=PA155&lpg=PA155&dq=crop+residue+coriander&source=bl&ots=NyhFs8bbXZ&sig=xUQcF__tZ61vf3pWtNgib9kKcbc&hl=en&sa=X&ved=0ahUKEwiFkIG7rrzYAhUDuRQKHbiiADIQ6AEILDAA#v=onepage&q=crop%20residue%20coriander&f=false)
@@ -764,10 +799,10 @@ DEFAULTS_VALUES_GENERATORS = {
     "compost_quantities": RatiosToValuesConvertor("compost_proportions", "total_composttype"),
     "sludge_quantities": RatiosToValuesConvertor("sludge_proportions", "total_sewagesludge"),
     # Seed defaults
-    "unsafe_seeds": CropCountryMatrixLookupDefaultGenerator(NB_SEEDS_PER_PARTIAL_CROP_PER_COUNTRY),
-    "seeds": SafeDefaultGenerator("unsafe_seeds", 0.0),
-    "nb_seedlings": PlantingDefaultGenerator(NB_SEEDLINGS_PER_PARTIAL_CROP_PER_COUNTRY),
-    "nb_planted_trees": PlantingDefaultGenerator(NB_PLANTED_TREES_PER_PARTIAL_CROP_PER_COUNTRY),
+    # L79: explicit lookup; crops without source -> legacy value or 0 with a warning; unknown crop -> KeyError
+    "seeds": SowingDefaultGenerator(NB_SEEDS_PER_PARTIAL_CROP_PER_COUNTRY, SEED_MAPPING),
+    "nb_seedlings": PlantingDefaultGenerator(NB_SEEDLINGS_PER_PARTIAL_CROP_PER_COUNTRY, PLANTING_MAPPING),
+    "nb_planted_trees": PlantingDefaultGenerator(NB_PLANTED_TREES_PER_PARTIAL_CROP_PER_COUNTRY, PLANTING_MAPPING),
     "orchard_lifetime": OrchardLifetimeDefaultGenerator(),
     "seed_quantities": SeedQuantitiesDefaultGenerator(),
     # lu_defaults
