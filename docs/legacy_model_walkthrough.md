@@ -1,6 +1,6 @@
 # Legacy crop LCI tool (sri-crop-tool): how the model works
 
-**Status of this document:** snapshot of 2026-10-26, moved here from the working notes of the legacy analysis. It describes the legacy code (`master` of sri-crop-tool) and the status of the fixes on that date. The detailed analysis is `docs/legacy_analysis.md`; the current status of each point is in `docs/DECISIONS.md` and `docs/legacy_fixes_report.md`.
+**Status of this document:** snapshot of 2026-10-26; the status column of section 8 was realigned with `docs/DECISIONS.md` on 2026-11-27 (up to L77, T24). Original text: snapshot of 2026-10-26, moved here from the working notes of the legacy analysis. It describes the legacy code (`master` of sri-crop-tool) and the status of the fixes on that date. The detailed analysis is `docs/legacy_analysis.md`; the current status of each point is in `docs/DECISIONS.md` and `docs/legacy_fixes_report.md`.
 
 **Code reference:** `ecoinvent/sri-crop-tool`, branch `master`, commit `a0a434a` (release 1.3.4-EI, built by Quantis 2016–2019).
 **Method reference:** Quantis, *Models integrated in ecoinvent LCI calculation tool for crop production* (final report 30 Jan 2018, file dated 2019-10-15). It is called "the description" below.
@@ -350,49 +350,61 @@ Seven metals: Cd, Cu, Zn, Pb, Ni, Cr, Hg.
 | A4 | Annual vs per-cycle mix in SQCB | D1 |
 | A5 | HM: manure input 1000 × too low; accumulation factor 0.86; deposition term missing; export not allocated | F4, F4d |
 | A6 | Fertiliser Zn "other" counted as Pb; lime per kg CaO applied to kg Ca | F4c |
-| A7 | Seed HM uses numbers of trees or seedlings as kg | Open |
-| A8 | Copper fungicide counted twice in soil (direct emission + HM balance) | Open |
-| A9 | Negative R factor, so negative erosion, at low precipitation | Open |
-| A10 | Groundwater utility water written as `Water, river` | Open (check the F9 alignment table) |
-| A11 | Sesame seed key mismatch; bromofenoxim and fenoxaprop product inputs dropped | Java side pending (F6/F9) |
-| A12 | LUC unit kg vs ha | Flagged in F9 |
+| A7 | Seed HM uses numbers of trees or seedlings as kg | L10 (SALCAheavymetal 2023 Table 1, recommendation 8: seed in kg only; seedlings and trees count 0) |
+| A8 | Copper fungicide counted twice in soil (direct emission + HM balance) | **Open.** Still present: the copper fungicide reaches the flow `Copper` (soil, agricultural, `fb876e1f`) twice, through the soil fraction of OLCA-Pest (L65, `pestisoil_fungicides_copper_cu`) and through the SALCAheavymetal balance, whose pesticide input already counts f_soil + f_crop (L14) |
+| A9 | Negative R factor, so negative erosion, at low precipitation | L60 (R from GloREDa; the LANCA R equations are no longer used) |
+| A10 | Groundwater utility water written as `Water, river` | **Open.** `elementary_flow_alignment.csv` maps `utilities_wateruse_ground` to `Water, river` (`8c75e7ab`) with status `ok` (R7); Master Data 3.12 has `Water, well, in ground` (`67c40aae`, natural resource, in water) |
+| A11 | Sesame seed key mismatch; bromofenoxim and fenoxaprop product inputs dropped | Writer: `java_changes_pending.md` (to carry into the new writer) |
+| A12 | LUC unit kg vs ha | Writer: `java_changes_pending.md` (to carry into the new writer) |
 
 ### B. Missing processes
 
 | # | Issue | Status |
 |---|---|---|
 | B1 | No CH4 from flooded rice | L66 (IPCC 2019 Tier 1, `ch4_rice_air`) |
-| B2 | No N_som / N2O from soil carbon losses; no land-management soil-carbon changes | N_som hook in F2 (input defaults to 0) |
+| B2 | No N_som / N2O from soil carbon losses; no land-management soil-carbon changes | Partly: N_som in the direct N2O (F2, L64) and in the N balance (L77); the SOC change input is still 0 (no land-management soil-carbon model) |
 | B3 | Rice had no land occupation or transformation | F7 |
-| B4 | Unspecified pesticides: product input but no emission | Open |
+| B4 | Unspecified pesticides: product input but no emission | T12 (total only for the packaging, with a warning; no emission) |
 | B5 | P from compost and from dehydrated or dried sludge ignored | L73 (SALCA-P run-off: all sludge as slurry, compost types as solid manure; leaching unchanged) |
 | B6 | By-products: no carbon uptake and no allocation properties | L74 (model: CO2 uptake of the main product and of the removed co-products from the Master Data 3.12 properties); writing by classification and allocation: ecoSpold/v4 writer (`java_changes_pending.md`) |
-| B7 | No pesticide fate (100 % to soil); no emissions to air or water | Open (method choice) |
+| B7 | No pesticide fate (100 % to soil); no emissions to air or water | L65 (OLCA-Pest fractions to air, water, soil, forestry), T16 |
 | B8 | No PM10 / PM2.5 from soil and crop dust of field operations | L68 (EMEP/EEA 2023 3.D Tier 2, `pm2_5_field_operations_air`, `pm2_5_to_10_field_operations_air`) |
 
 ### C. Defaults and data
 
 | # | Issue | Status |
 |---|---|---|
-| C1 | Template pre-filled 0s disable the fertiliser, manure and pesticide defaults, while blank water triggers the default irrigation | Open |
-| C2 | Default irrigation makes almost every crop "irrigated" | Open |
-| C3 | Seed default tables are partial; a missing entry silently gives 0 seed | Open |
-| C4 | LUC is in practice shared-responsibility only; country table frozen (FAOSTAT up to 2012); 39 countries | Open |
-| C5 | Unsourced P loss rates for vegetables, fruit trees and viticulture; legacy constants spread over Python dictionaries | Partly moved to CSV in F8 and F4 |
-| C6 | Country coverage limited to 39 hard-coded countries; `CS` = Serbia (obsolete code) | Open |
+| C1 | Template pre-filled 0s disable the fertiliser, manure and pesticide defaults, while blank water triggers the default irrigation | T3 (template v3: N/A takes the default, 0 is a real zero); template v3 reader not built yet |
+| C2 | Default irrigation makes almost every crop "irrigated" | T5 (`irrigated` yes / no; water 0 when no), L44 (default water only when irrigated) |
+| C3 | Seed default tables are partial; a missing entry silently gives 0 seed | L46, L47 (seed of 16 sown crops, seedlings and trees from ecoinvent 3.12); to check: crops still without a seed default |
+| C4 | LUC is in practice shared-responsibility only; country table frozen (FAOSTAT up to 2012); 39 countries | Partly: L16 (tables of the Blonk direct LUC tool 2016); method update open |
+| C5 | Unsourced P loss rates for vegetables, fruit trees and viticulture; legacy constants spread over Python dictionaries | L19 (all 7 classes checked against Prasuhn 2006 Tab. 1 and 2); constants moved to `data/` (F4, F8, L49, L55) |
+| C6 | Country coverage limited to 39 hard-coded countries; `CS` = Serbia (obsolete code) | Partly: T1 (template v3: UN M49 list with region fallback); defaults still for the 39 countries (L58); `CS` = Serbia documented in `faostat_country_mapping.csv` |
 | C7 | Greenhouse lifetime = orchard lifetime (20 years) | L51 (amount in m2*year like the land occupation; the lifetimes of structure and film are inside the annualised ecoinvent greenhouse and tunnel datasets) |
 
 ### D. Architecture and ecoinvent integration
 
 | # | Issue | Status |
 |---|---|---|
-| D1 | Product and flow names hard-coded in Java and matched by name; failures only on stdout | F9 review tables |
+| D1 | Product and flow names hard-coded in Java and matched by name; failures only on stdout | F9, L9, R7, R8 (alignment tables with Master Data 3.12 UUIDs); new writer pending |
 | D2 | ecoinvent version set by whatever Master Data XML is deployed on the server | config.py + agritool.cfg (F6, F9) |
-| D3 | Logic split between Java and Python (pesticide remainders in Java; unit conversions in Python; crop list duplicated) | Open |
-| D4 | Defaults invisible to the user and in the dataset | Open |
-| D5 | Time period taken from the server clock; no ISIC/CPC classification, no technology text, no reference-product properties | Open |
-| D6 | Fixed pedigree per category; data-quality scores and sources from the template ignored | Open |
+| D3 | Logic split between Java and Python (pesticide remainders in Java; unit conversions in Python; crop list duplicated) | Open (new reader and writer, T13, `java_changes_pending.md`) |
+| D4 | Defaults invisible to the user and in the dataset | Open in the writer; template v3 sheet `Sources` (T7) and warnings for defaults (T2, T3) |
+| D5 | Time period taken from the server clock; no ISIC/CPC classification, no technology text, no reference-product properties | Partly: reference-product properties from the Master Data (L74, T23, T24); the rest in the new writer |
+| D6 | Fixed pedigree per category; data-quality scores and sources from the template ignored | Open (template v3 sheet `Sources`, T7; pedigree in the new writer) |
 | D7 | Closed-source Quantis libraries; single-threaded Python server; no timeouts; unauthenticated account-creation endpoint | Open (obsolete if rewritten) |
+
+### E. Still open on 2026-11-27, by effort
+
+| Effort | Item | What is needed |
+|---|---|---|
+| Small | A10 | One row of `elementary_flow_alignment.csv`: `utilities_wateruse_ground` -> `Water, well, in ground` (`67c40aae-d403-464d-9649-c12695e43ad8`); correction of a row signed in R7 |
+| Small | A8 | Do not write the OLCA-Pest soil fraction of metal active ingredients (copper) when the SALCAheavymetal balance counts them (L14); air, water and forestry fractions stay |
+| Small | C3 | List the crops still without a seed or planting default and decide (warning or source) |
+| Medium | L77 next step | Soil mineralisation Mh (COMIFER 2013 Eq. 7-10) in the N balance, then the decision to replace SQCB |
+| Medium | B2 | Land-management soil-carbon change (SOC change input still 0) |
+| Medium | C4 | LUC method update (Blonk tool 2016 tables) |
+| Large | A11, A12, D3-D7 | Template v3 reader and ecoSpold2 / v4 writer (`java_changes_pending.md`) |
 
 ## 9. Points to carry into AgriTool V.1
 
