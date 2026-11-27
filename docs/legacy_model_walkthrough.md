@@ -376,7 +376,7 @@ Seven metals: Cd, Cu, Zn, Pb, Ni, Cr, Hg.
 |---|---|---|
 | C1 | Template pre-filled 0s disable the fertiliser, manure and pesticide defaults, while blank water triggers the default irrigation | T3 (template v3: N/A takes the default, 0 is a real zero); template v3 reader not built yet |
 | C2 | Default irrigation makes almost every crop "irrigated" | T5 (`irrigated` yes / no; water 0 when no), L44 (default water only when irrigated) |
-| C3 | Seed default tables are partial; a missing entry silently gives 0 seed | L46, L47 (seed of 16 sown crops, seedlings and trees from ecoinvent 3.12); to check: crops still without a seed default |
+| C3 | Seed default tables are partial; a missing entry silently gives 0 seed | L46, L47, L79: seed of 16 sown crops (FAOSTAT, TCF) and of carrot, sugar beet, sweet corn, flax, hemp and coriander (ecoinvent 3.12), seedlings and trees from ecoinvent 3.12; the 11 crops without source (cassava, guar, turmeric; chilli, eggplant, ginger, raspberry; sugarcane, blueberry, cranberry, pineapple) keep the legacy value or 0 with a warning; a crop in no table raises an error instead of 0 |
 | C4 | LUC is in practice shared-responsibility only; country table frozen (FAOSTAT up to 2012); 39 countries | Partly: L16 (tables of the Blonk direct LUC tool 2016); method update open |
 | C5 | Unsourced P loss rates for vegetables, fruit trees and viticulture; legacy constants spread over Python dictionaries | L19 (all 7 classes checked against Prasuhn 2006 Tab. 1 and 2); constants moved to `data/` (F4, F8, L49, L55) |
 | C6 | Country coverage limited to 39 hard-coded countries; `CS` = Serbia (obsolete code) | Partly: T1 (template v3: UN M49 list with region fallback); defaults still for the 39 countries (L58); `CS` = Serbia documented in `faostat_country_mapping.csv` |
@@ -398,7 +398,6 @@ Seven metals: Cd, Cu, Zn, Pb, Ni, Cr, Hg.
 
 | Effort | Item | What is needed |
 |---|---|---|
-| Small | C3 | List the crops still without a seed or planting default and decide (warning or source) |
 | Medium | L77 next step | Soil mineralisation Mh (COMIFER 2013 Eq. 7-10) in the N balance, then the decision to replace SQCB |
 | Medium | B2 | Land-management soil-carbon change (SOC change input still 0) |
 | Medium | C4 | LUC method update (Blonk tool 2016 tables) |

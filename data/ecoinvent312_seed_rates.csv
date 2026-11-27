@@ -1,0 +1,27 @@
+activity_name,geography,reference_product,seed_exchange,seed_kg_per_ha_and_crop_cycle
+carrot production,CN,carrot,"carrot seed, for sowing",4.2
+carrot production,IL,carrot,"carrot seed, for sowing",4.2
+carrot production,NL,carrot,"carrot seed, for sowing",4.2
+carrot production,RoW,carrot,"carrot seed, for sowing",4.2
+"carrot production, conventional, plain region",CH,carrot,"carrot seed, Swiss integrated production, at farm",1.6
+"carrot production, organic, plain region",CH,"carrot, organic","carrot seed, Swiss integrated production, at farm",1.2
+coriander production,IN,coriander,"linseed seed, at farm",45.0
+coriander production,RoW,coriander,"linseed seed, at farm",45.0
+"flax straw production, dew-retted",RER,"flax straw, dew-retted","linseed seed, at farm",115.0
+"hemp stem production, dew-retted",FR,"hemp stem, dew-retted","linseed seed, for sowing",47.2603
+sugar beet production,DE,sugar beet,"sugar beet seed, for sowing",3.0
+sugar beet production,FR,sugar beet,"sugar beet seed, for sowing",2.0
+sugar beet production,RU,sugar beet,"sugar beet seed, for sowing",3.0
+sugar beet production,RoW,sugar beet,"sugar beet seed, for sowing",2.1
+sugar beet production,US,sugar beet,"sugar beet seed, for sowing",2.1
+"sugar beet production, conventional, plain region",CH,sugar beet,"sugar beet seed, for sowing",2.1
+"sugar beet production, organic, plain region",CH,"sugar beet, organic","sugar beet seed, for sowing",2.1
+sweet corn production,HU,sweet corn,"maize seed, Swiss integrated production, for sowing",15.0
+sweet corn production,RoW,sweet corn,"maize seed, Swiss integrated production, for sowing",21.7996
+sweet corn production,TH,sweet corn,"maize seed, Swiss integrated production, for sowing",16.0
+sweet corn production,US-CA,sweet corn,"maize seed, for sowing",9.49774
+sweet corn production,US-FL,sweet corn,"maize seed, for sowing",11.0807
+sweet corn production,US-MN,sweet corn,"maize seed, for sowing",12.2679
+sweet corn production,US-OR,sweet corn,"maize seed, for sowing",12.2729
+sweet corn production,US-WA,sweet corn,"maize seed, for sowing",12.2729
+sweet corn production,US-WI,sweet corn,"maize seed, for sowing",9.68475

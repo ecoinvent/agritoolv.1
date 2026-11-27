@@ -123,10 +123,13 @@ def test_annual_seedlings_are_per_ha_and_crop_cycle():
         _defaults("strawberry_fresh", "ES")["nb_seedlings"]
 
 
-def test_legacy_crops_keep_the_legacy_values():
-    for crop, country in (("blueberry", "US"), ("pineapple", "CR"), ("sugarcane", "BR"), ("raspberry", "CS"),
-                          ("chilli", "IN"), ("ginger", "IN")):
-        assert _defaults(crop, country)["seed_quantities"] == {crop: 0.0}
+def test_legacy_crops_keep_the_legacy_values_with_a_warning():
+    # decision L79: no source, 0 and a warning naming the crop and the field
+    for crop, country, field in (("blueberry", "US", "nb_planted_trees"), ("pineapple", "CR", "nb_planted_trees"),
+                                 ("sugarcane", "BR", "nb_planted_trees"), ("raspberry", "CS", "nb_seedlings"),
+                                 ("chilli", "IN", "nb_seedlings"), ("ginger", "IN", "nb_seedlings")):
+        with pytest.warns(UserWarning, match="Crop '%s': default %s = 0 " % (crop, field)):
+            assert _defaults(crop, country)["seed_quantities"] == {crop: 0.0}
 
 
 @pytest.mark.skipif(not os.environ.get("AGRITOOL_SLOW_TESTS"), reason="about 60 s; set AGRITOOL_SLOW_TESTS=1")

@@ -1,6 +1,7 @@
 """Decision L46: default seed of the sown crops from FAOSTAT SUA seed / area harvested of the next year (2021-2023),
 checked against the seeding rates of the FAO Technical Conversion Factors (data/default_seed.csv, built by
-scripts/build_default_seed.py); crops without usable data keep the legacy GLO values."""
+scripts/build_default_seed.py); decision L79: carrot, coriander, flax, hemp, sugar beet and sweet corn from the ecoinvent
+3.12 datasets (test_ecoinvent_seed_defaults.py); the crops without source keep the legacy GLO values."""
 import importlib.util
 import os
 from pathlib import Path
@@ -30,7 +31,7 @@ def _float(value):
     return float(value) if value != "" else None
 
 
-def test_mapping_covers_the_sown_crops_and_splits_them_into_table_and_legacy():
+def test_mapping_covers_the_sown_crops_and_splits_them_into_tables_and_legacy():
     crops = [row["crop"] for row in dataloader.rows("faostat_crop_item_mapping.csv")]
     sown = {crop for crop in crops if crop not in TREE_BASED_CROPS and crop not in SEEDLINGS_BASED_CROPS}
     assert set(MAPPING) == sown
@@ -92,7 +93,7 @@ def test_outliers_take_the_tcf_or_glo_rate():
 def test_default_seed_quantities_use_the_table_and_the_legacy_values():
     for crop, country, expected in (("wheat", "FR", float(SEEDS[("wheat", "FR")]["seed_kg_per_ha"])),
                                     ("rice", "IN", float(SEEDS[("rice", "IN")]["seed_kg_per_ha"])),
-                                    ("carrot", "FR", 4.2), ("sugarbeet", "DE", 2.1)):
+                                    ("carrot", "FR", 4.2), ("sugarbeet", "DE", 3.0)):
         defaults = DefaultValuesWrapper({"crop": crop, "country": country}, DEFAULTS_VALUES_GENERATORS)
         assert defaults["seeds"] == expected
         assert defaults["seed_quantities"] == {crop: expected}
