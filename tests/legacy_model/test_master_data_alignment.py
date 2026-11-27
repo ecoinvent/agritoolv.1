@@ -59,3 +59,17 @@ def test_product_properties_table_matches_the_master_data():
         assert exchanges[product].uuid == row["md312_uuid"], product
         for column, prop in columns.items():
             assert row[column] == pytest.approx(props[(product, prop)], rel=1e-12), (product, prop)
+
+
+@pytest.mark.parametrize("variable", ["utilities_wateruse_ground", "utilities_wateruse_surface"])
+def test_utility_water_flows_match_the_master_data(variable):
+    """Name, UUID, compartment and unit of the utility water flows (A10, R12) in sheet ElementaryExchanges."""
+    from openpyxl import load_workbook
+    wb = load_workbook(config.master_data_path(), read_only=True, data_only=True)
+    it = wb["ElementaryExchanges"].iter_rows(values_only=True)
+    header = [str(h) for h in next(it)]
+    by_uuid = {d["id"]: d for d in (dict(zip(header, r)) for r in it)}
+    row = next(r for r in dataloader.rows("elementary_flow_alignment.csv") if r["model_variable"] == variable)
+    md = by_uuid[row["md312_uuid"]]
+    assert (md["name"], md["compartment"], md["subcompartment"], md["unitName"]) == \
+        (row["md312_name"], row["compartment"], row["subcompartment"], row["md312_unit"])
