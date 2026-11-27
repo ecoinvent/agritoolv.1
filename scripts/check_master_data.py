@@ -126,6 +126,8 @@ VARIABLE_PROPOSAL_RULES = {
     "hydrated_lime_applied": ("hydrated lime, loose",
                               "L72 (template v3 T20): Ca(OH)2 in kg of product, spread in bulk; same name in ecoCalc v4; "
                               "other Master Data 3.12 product: 'hydrated lime, packed'"),
+    "utilities_wateruse_ground": ("Water, well, in ground",
+                                  "groundwater source; MD 3.12 'Water, well, in ground'; corrects R7 (walkthrough A10)"),
 }
 
 REVIEW_STATUSES = ("confirmed", "not_needed")
